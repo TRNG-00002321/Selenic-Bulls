@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Expense Dashboard</title>
+</head>
+<body>
+    <div id="header">
+        <h1>Employee Expense Dashboard</h1>
+        <div style="float: right;">
+            <span>Welcome, <span id="username-display"></span></span>
+            <button id="logout-btn" style="margin-left: 10px;">Logout</button>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div id="navigation">
+        <button id="show-submit">Submit New Expense</button>
+        <button id="show-expenses">View My Expenses</button>
+    </div>
+
+    <!-- Submit Expense Section -->
+    <div id="submit-expense-section" style="display: none;">
+        <h3>Submit New Expense</h3>
+        <form id="expense-form">
+            <div>
+                <label for="amount">Amount ($):</label>
+                <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+            </div>
+            <div>
+                <label for="description">Description:</label>
+                <input type="text" id="description" name="description" maxlength="255" required>
+            </div>
+            <div>
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <button type="submit">Submit Expense</button>
+            <button type="button" id="cancel-submit">Cancel</button>
+        </form>
+        <div id="submit-message"></div>
+    </div>
+
+    <!-- View Expenses Section -->
+    <div id="expenses-section" style="display: none;">
+        <h3>My Expenses</h3>
+        
+        <!-- Filter Options -->
+        <div id="expense-filters">
+            <label for="status-filter">Filter by status:</label>
+            <select id="status-filter">
+                <option value="">All</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+            </select>
+            <button id="refresh-expenses">Refresh</button>
+        </div>
+        
+        <!-- Expenses List -->
+        <div id="expenses-list">
+            <!-- Expenses will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Edit Expense Section -->
+    <div id="edit-expense-section" style="display: none;">
+        <h3>Edit Expense</h3>
+        <form id="edit-expense-form">
+            <input type="hidden" id="edit-expense-id">
+            <div>
+                <label for="edit-amount">Amount ($):</label>
+                <input type="number" id="edit-amount" name="amount" step="0.01" min="0.01" required>
+            </div>
+            <div>
+                <label for="edit-description">Description:</label>
+                <input type="text" id="edit-description" name="description" maxlength="255" required>
+            </div>
+            <div>
+                <label for="edit-date">Date:</label>
+                <input type="date" id="edit-date" name="date" required>
+            </div>
+            <button type="submit">Update Expense</button>
+            <button type="button" id="cancel-edit">Cancel</button>
+        </form>
+        <div id="edit-message"></div>
+    </div>
+
+    <!-- Loading/Auth Check -->
+    <div id="loading-section">
+        <p>Loading...</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="static/expenses.js"></script>
+</body>
+</html>

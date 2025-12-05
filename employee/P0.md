@@ -1,0 +1,72 @@
+# Project Requirements Document: Revature Expense Manager
+
+## Overview
+**Revature Expense Manager** is a console-based expense tracking system designed for small teams or organizations. It features two distinct applications:
+- A **Python-based Employee App** for submitting and managing personal expense reports.
+- A **Java-based Manager App** for reviewing, approving, or denying submitted expenses.
+
+The system uses a **shared SQLite database** to ensure consistent data access and persistence across both applications.
+
+---
+
+## Technologies Used
+- **Python 3.x** – Employee CLI interface and data entry
+- **Java 17+** – Manager CLI interface and expense approval logic
+- **SQLite** – Lightweight relational database for shared persistence
+- **Git** – Version control software for collaboration facilitation
+
+---
+
+## User Stories
+
+### Employee App (Python)
+- As an employee, I want to log in with my credentials so that I can securely access my expense reports.
+- As an employee, I want to submit a new expense with details about amount and description so that I can request reimbursement or track spending.
+- As an employee, I want to view the status of my submitted expenses so that I know whether they are pending, approved, or denied.
+- As an employee, I want to edit or delete expenses that are still pending so that I can correct mistakes before they are reviewed.
+- As an employee, I want to view a history of all my approved and denied expenses so that I can track my financial activity over time.
+
+### Manager App (Java)
+- As a manager, I want to log in securely so that I can access and manage employee expense reports.
+- As a manager, I want to view a list of all pending expenses so that I can review them efficiently.
+- As a manager, I want to approve or deny submitted expenses so that I can manage reimbursements appropriately.
+- As a manager, I want to add comments to expense decisions so that employees understand the reasoning behind approvals or denials.
+- As a manager, I want to generate reports by employee, category, or date so that I can analyze spending trends and make informed decisions.
+
+## Shared Application MVPs
+- Shared SQLite schema with normalized tables
+- Role-based access: employees vs. managers
+- Expense lifecycle: submission → review → approval/denial
+- Basic reporting and feedback mechanisms
+- Work saved in a remote repository
+
+---
+
+## Schema Overview (Initial Draft)
+
+### `users`
+|Column|Type|Description|
+|------|----|-----------|
+|id|Integer|Primary Key|
+|username|TEXT|Unique Login Name|
+|password|TEXT|account password|
+|role|TEXT|Employee or Manager|
+
+### `expenses`
+|Column|Type|Description|
+|------|----|-----------|
+|id|Integer|Primary Key|
+|user_id|Integer|Foreign Key to `users`|
+|amount|REAL|Expense amount|
+|description|TEXT|Reason for expense request|
+|date|TEXT|Date of expense|
+
+### `approvals`
+|Column|Type|Description|
+|------|----|-----------|
+|id|Integer|Primary Key|
+|expense_id|Integer|Foreign Key to `expenses`|
+|status|TEXT|pending, approved, denied|
+|reviewer|INTEGER|Manager user ID (null if not reviewed yet)|
+|comment|TEXT|Feedback from Manager|
+|review_date|TEXT|Date review decision was made|

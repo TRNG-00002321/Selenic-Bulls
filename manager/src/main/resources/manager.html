@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Expense Dashboard</title>
+</head>
+<body>
+    <div id="header">
+        <h1>Manager Expense Dashboard</h1>
+        <div style="float: right;">
+            <span>Welcome, <span id="username-display"></span></span>
+            <button id="logout-btn" style="margin-left: 10px;">Logout</button>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div id="navigation">
+        <button id="show-pending">Pending Expenses</button>
+        <button id="show-all-expenses">All Expenses</button>
+        <button id="show-reports">Generate Reports</button>
+    </div>
+
+    <!-- Pending Expenses Section -->
+    <div id="pending-expenses-section" style="display: none;">
+        <h3>Pending Expenses for Review</h3>
+        <button id="refresh-pending">Refresh</button>
+        <div id="pending-expenses-list">
+            <!-- Pending expenses will be loaded here -->
+        </div>
+    </div>
+
+    <!-- All Expenses Section -->
+    <div id="all-expenses-section" style="display: none;">
+        <h3>All Expenses</h3>
+        
+        <!-- Filter Options -->
+        <div id="expense-filters">
+            <label for="employee-filter">Filter by Employee ID:</label>
+            <input type="number" id="employee-filter" placeholder="Enter employee ID">
+            <button id="filter-by-employee">Filter</button>
+            <button id="clear-employee-filter">Show All</button>
+            <button id="refresh-all-expenses">Refresh</button>
+        </div>
+        
+        <!-- All Expenses List -->
+        <div id="all-expenses-list">
+            <!-- All expenses will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reports-section" style="display: none;">
+        <h3>Generate Reports (CSV)</h3>
+        
+        <div id="report-options">
+            <div style="margin-bottom: 20px;">
+                <h4>Quick Reports</h4>
+                <button id="generate-all-expenses-report">All Expenses Report</button>
+                <button id="generate-pending-report">Pending Expenses Report</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Employee Report</h4>
+                <label for="employee-report-id">Employee ID:</label>
+                <input type="number" id="employee-report-id" placeholder="Enter employee ID">
+                <button id="generate-employee-report">Generate Employee Report</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Category Report</h4>
+                <label for="category-report">Category:</label>
+                <input type="text" id="category-report" placeholder="Enter category (e.g., Travel, Meals)">
+                <button id="generate-category-report">Generate Category Report</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Date Range Report</h4>
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date">
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date">
+                <button id="generate-date-range-report">Generate Date Range Report</button>
+            </div>
+        </div>
+        
+        <div id="report-message"></div>
+    </div>
+
+    <!-- Expense Review Modal -->
+    <div id="review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; max-width: 500px; width: 90%;">
+            <h3>Review Expense</h3>
+            
+            <div id="expense-details">
+                <!-- Expense details will be populated here -->
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <label for="review-comment">Comment (optional):</label>
+                <textarea id="review-comment" rows="3" style="width: 100%; margin-top: 5px;" placeholder="Add a comment about your decision..."></textarea>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="approve-expense" style="background-color: green; color: white; margin-right: 10px;">Approve</button>
+                <button id="deny-expense" style="background-color: red; color: white; margin-right: 10px;">Deny</button>
+                <button id="cancel-review">Cancel</button>
+            </div>
+            
+            <div id="review-message" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- Loading/Auth Check -->
+    <div id="loading-section">
+        <p>Loading...</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="manager.js"></script>
+</body>
+</html>

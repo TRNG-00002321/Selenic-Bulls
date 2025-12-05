@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Login - Expense Manager</title>
+</head>
+<body>
+    <h1>Employee Expense Manager</h1>
+    
+    <div id="login-section">
+        <h2>Employee Login</h2>
+        <form id="login-form">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div id="login-message"></div>
+        
+        <div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+            <h3>Sample Credentials:</h3>
+            <ul>
+                <li><strong>Employee:</strong> employee1 / password123</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="static/auth.js"></script>
+</body>
+</html>
