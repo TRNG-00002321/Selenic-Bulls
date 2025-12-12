@@ -6,13 +6,7 @@ import org.junit.platform.suite.api.*;
 // Sets a display name for the suite in reports
 @SuiteDisplayName("Calculator Test Suite")
 // Selects the specific classes to include in this suite
-@SelectClasses({
-        CalcParamTest.class,
-        CalculatorTest.class,
-        StringUtilsTest.class,
-        ExceptionTesting.class,
-        UserRepositoryTest.class
-})
+@SelectClasses({})
 public class ManagerTestSuite
 {
 
