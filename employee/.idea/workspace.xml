@@ -4,26 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bf5cfabf-2f37-4107-b612-a8cf6af135b2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../manager/src/test/java/com/revature/ManagerTestSuite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/repository/approval_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/repository/approval_repository.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/AuthenticationMiddleware.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/AuthenticationMiddleware.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ExpenseController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ExpenseController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ReportController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ReportController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Approval.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Approval.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ApprovalRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ApprovalRepository.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/DatabaseConnection.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/DatabaseConnection.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Expense.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Expense.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseRepository.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseWithUser.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseWithUser.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/User.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/User.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/UserRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/UserRepository.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/AuthenticationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/AuthenticationService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/ExpenseService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/ExpenseService.class" afterDir="false" />
-    </list>
+    <list default="true" id="bf5cfabf-2f37-4107-b612-a8cf6af135b2" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
