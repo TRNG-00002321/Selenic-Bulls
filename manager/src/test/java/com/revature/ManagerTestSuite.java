@@ -9,6 +9,6 @@ import org.junit.platform.suite.api.*;
 @SelectClasses({})
 public class ManagerTestSuite
 {
-
+        
 }
 
