@@ -49,13 +49,13 @@ class ApprovalRepository:
                 results.append((expense, approval))
         return results
     
-    def update_status(self, expense_id: int, status: str, reviewer_id: Optional[int] = None, 
-                     comment: Optional[str] = None, review_date: Optional[str] = None) -> bool:
-        """Update approval status."""
-        with self.db_connection.get_connection() as conn:
-            cursor = conn.execute(
-                "UPDATE approvals SET status = ?, reviewer = ?, comment = ?, review_date = ? WHERE expense_id = ?",
-                (status, reviewer_id, comment, review_date, expense_id)
-            )
-            conn.commit()
-            return cursor.rowcount > 0
+    # def update_status(self, expense_id: int, status: str, reviewer_id: Optional[int] = None,
+    #                  comment: Optional[str] = None, review_date: Optional[str] = None) -> bool:
+    #     """Update approval status."""
+    #     with self.db_connection.get_connection() as conn:
+    #         cursor = conn.execute(
+    #             "UPDATE approvals SET status = ?, reviewer = ?, comment = ?, review_date = ? WHERE expense_id = ?",
+    #             (status, reviewer_id, comment, review_date, expense_id)
+    #         )
+    #         conn.commit()
+    #         return cursor.rowcount > 0

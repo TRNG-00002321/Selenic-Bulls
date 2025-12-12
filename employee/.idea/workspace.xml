@@ -5,8 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bf5cfabf-2f37-4107-b612-a8cf6af135b2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../manager/src/main/java/com/revature/repository/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/src/main/java/com/revature/repository/DatabaseConnection.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../manager/src/test/java/com/revature/ManagerTestSuite.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/repository/approval_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/repository/approval_repository.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/AuthenticationMiddleware.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/AuthenticationMiddleware.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ExpenseController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ExpenseController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ReportController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/api/ReportController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Approval.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Approval.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ApprovalRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ApprovalRepository.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/DatabaseConnection.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/DatabaseConnection.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Expense.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/Expense.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseRepository.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseWithUser.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/ExpenseWithUser.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/User.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/User.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/UserRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/repository/UserRepository.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/AuthenticationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/AuthenticationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/ExpenseService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../manager/target/classes/com/revature/service/ExpenseService.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,26 +32,28 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="36eynDqKIhsRI35bCr4RHshaADG" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/Stephenie/Documents/Revature/StephRepo/P1/Project1QAsuals/employee",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Stephenie/Documents/Revature/Project1QAsuals/employee&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
