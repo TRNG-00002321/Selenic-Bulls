@@ -1,5 +1,5 @@
-package com.revature;
+package com.revature.controllertests;
 
-public class GetPendingExpenseTest {
+public class GetPendingExpenseControllerTest {
 
 }

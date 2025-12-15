@@ -1,5 +1,5 @@
-package com.revature;
+package com.revature.servicetests;
 
-public class GetPendingExpenseServiceest {
+public class GetPendingExpenseServiceTest {
 
 }
