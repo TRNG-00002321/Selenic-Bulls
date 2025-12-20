@@ -1,0 +1,14 @@
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/Main.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/api/AuthenticationMiddleware.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/api/ExpenseController.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/api/ReportController.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/Approval.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/ApprovalRepository.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/DatabaseConnection.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/Expense.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/ExpenseRepository.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/ExpenseWithUser.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/User.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/repository/UserRepository.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/service/AuthenticationService.java
+/Users/rod/Developer/expense_apps/manager/src/main/java/com/revature/service/ExpenseService.java

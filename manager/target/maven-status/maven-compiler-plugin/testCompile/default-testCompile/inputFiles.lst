@@ -1,0 +1,4 @@
+/Users/rod/Developer/expense_apps/manager/src/test/java/com/revature/ManagerTestSuite.java
+/Users/rod/Developer/expense_apps/manager/src/test/java/com/revature/controllertests/GetPendingExpenseControllerTest.java
+/Users/rod/Developer/expense_apps/manager/src/test/java/com/revature/repotests/GetPendingExpenseRepoTest.java
+/Users/rod/Developer/expense_apps/manager/src/test/java/com/revature/servicetests/GetPendingExpenseServiceTest.java

@@ -1,0 +1,4 @@
+com/revature/servicetests/GetPendingExpenseServiceTest.class
+com/revature/repotests/GetPendingExpenseRepoTest.class
+com/revature/ManagerTestSuite.class
+com/revature/controllertests/GetPendingExpenseControllerTest.class

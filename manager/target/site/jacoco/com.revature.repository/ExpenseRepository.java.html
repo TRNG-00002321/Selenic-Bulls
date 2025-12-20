@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExpenseRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">manager</a> &gt; <a href="index.source.html" class="el_package">com.revature.repository</a> &gt; <span class="el_source">ExpenseRepository.java</span></div><h1>ExpenseRepository.java</h1><pre class="source lang-java linenums">package com.revature.repository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository for expense data access operations.
+ * Handles database interactions for expense management and reporting.
+ */
+public class ExpenseRepository {
+    private final DatabaseConnection databaseConnection;
+    
+<span class="nc" id="L18">    public ExpenseRepository(DatabaseConnection databaseConnection) {</span>
+<span class="nc" id="L19">        this.databaseConnection = databaseConnection;</span>
+<span class="nc" id="L20">    }</span>
+    
+    /**
+     * Find an expense by its ID.
+     * @param expenseId the expense ID
+     * @return Optional containing the expense if found, empty otherwise
+     */
+    public Optional&lt;Expense&gt; findById(int expenseId) {
+<span class="nc" id="L28">        String sql = &quot;SELECT id, user_id, amount, description, date FROM expenses WHERE id = ?&quot;;</span>
+        
+<span class="nc" id="L30">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L31">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L33">            stmt.setInt(1, expenseId);</span>
+<span class="nc" id="L34">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L36" title="All 2 branches missed.">            if (rs.next()) {</span>
+<span class="nc" id="L37">                return Optional.of(mapRowToExpense(rs));</span>
+            }
+            
+<span class="nc bnc" id="L40" title="All 4 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L41">            throw new RuntimeException(&quot;Error finding expense by ID: &quot; + expenseId, e);</span>
+<span class="nc" id="L42">        }</span>
+        
+<span class="nc" id="L44">        return Optional.empty();</span>
+    }
+    
+    /**
+     * Get all expenses with pending approval status along with user information.
+     * @return List of ExpenseWithUser objects for pending expenses
+     */
+    public List&lt;ExpenseWithUser&gt; findPendingExpensesWithUsers() {
+<span class="nc" id="L52">        String sql = &quot;&quot;&quot;</span>
+            SELECT e.id, e.user_id, e.amount, e.description, e.date,
+                   u.username, u.role,
+                   a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
+            FROM expenses e
+            JOIN users u ON e.user_id = u.id
+            JOIN approvals a ON e.id = a.expense_id
+            WHERE a.status = 'pending'
+            ORDER BY e.date DESC
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L63">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L65">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L66">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L68">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L71">                results.add(mapRowToExpenseWithUser(rs));</span>
+            }
+            
+<span class="nc" id="L74">        } catch (SQLException e) {</span>
+<span class="nc" id="L75">            throw new RuntimeException(&quot;Error finding pending expenses&quot;, e);</span>
+<span class="nc" id="L76">        }</span>
+        
+<span class="nc" id="L78">        return results;</span>
+    }
+    
+    /**
+     * Get all expenses for a specific user.
+     * @param userId the user ID
+     * @return List of ExpenseWithUser objects
+     */
+    public List&lt;ExpenseWithUser&gt; findExpensesByUser(int userId) {
+<span class="nc" id="L87">        String sql = &quot;&quot;&quot;</span>
+            SELECT e.id, e.user_id, e.amount, e.description, e.date,
+                   u.username, u.role,
+                   a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
+            FROM expenses e
+            JOIN users u ON e.user_id = u.id
+            JOIN approvals a ON e.id = a.expense_id
+            WHERE e.user_id = ?
+            ORDER BY e.date DESC
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L98">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L100">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L101">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L103">            stmt.setInt(1, userId);</span>
+<span class="nc" id="L104">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L107">                results.add(mapRowToExpenseWithUser(rs));</span>
+            }
+            
+<span class="nc" id="L110">        } catch (SQLException e) {</span>
+<span class="nc" id="L111">            throw new RuntimeException(&quot;Error finding expenses for user: &quot; + userId, e);</span>
+<span class="nc" id="L112">        }</span>
+        
+<span class="nc" id="L114">        return results;</span>
+    }
+    
+    /**
+     * Get expenses by date range.
+     * @param startDate start date (inclusive)
+     * @param endDate end date (inclusive)
+     * @return List of ExpenseWithUser objects
+     */
+    public List&lt;ExpenseWithUser&gt; findExpensesByDateRange(String startDate, String endDate) {
+<span class="nc" id="L124">        String sql = &quot;&quot;&quot;</span>
+            SELECT e.id, e.user_id, e.amount, e.description, e.date,
+                   u.username, u.role,
+                   a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
+            FROM expenses e
+            JOIN users u ON e.user_id = u.id
+            JOIN approvals a ON e.id = a.expense_id
+            WHERE e.date &gt;= ? AND e.date &lt;= ?
+            ORDER BY e.date DESC
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L135">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L137">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L138">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L140">            stmt.setString(1, startDate);</span>
+<span class="nc" id="L141">            stmt.setString(2, endDate);</span>
+<span class="nc" id="L142">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L145">                results.add(mapRowToExpenseWithUser(rs));</span>
+            }
+            
+<span class="nc" id="L148">        } catch (SQLException e) {</span>
+<span class="nc" id="L149">            throw new RuntimeException(&quot;Error finding expenses by date range: &quot; + startDate + &quot; to &quot; + endDate, e);</span>
+<span class="nc" id="L150">        }</span>
+        
+<span class="nc" id="L152">        return results;</span>
+    }
+    
+    /**
+     * Get expenses grouped by description (category).
+     * @param category the description/category to filter by
+     * @return List of ExpenseWithUser objects
+     */
+    public List&lt;ExpenseWithUser&gt; findExpensesByCategory(String category) {
+<span class="nc" id="L161">        String sql = &quot;&quot;&quot;</span>
+            SELECT e.id, e.user_id, e.amount, e.description, e.date,
+                   u.username, u.role,
+                   a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
+            FROM expenses e
+            JOIN users u ON e.user_id = u.id
+            JOIN approvals a ON e.id = a.expense_id
+            WHERE e.description LIKE ?
+            ORDER BY e.date DESC
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L172">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L174">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L175">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L177">            stmt.setString(1, &quot;%&quot; + category + &quot;%&quot;);</span>
+<span class="nc" id="L178">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L181">                results.add(mapRowToExpenseWithUser(rs));</span>
+            }
+            
+<span class="nc" id="L184">        } catch (SQLException e) {</span>
+<span class="nc" id="L185">            throw new RuntimeException(&quot;Error finding expenses by category: &quot; + category, e);</span>
+<span class="nc" id="L186">        }</span>
+        
+<span class="nc" id="L188">        return results;</span>
+    }
+    
+    /**
+     * Get all expenses with their user and approval information.
+     * @return List of all ExpenseWithUser objects
+     */
+    public List&lt;ExpenseWithUser&gt; findAllExpensesWithUsers() {
+<span class="nc" id="L196">        String sql = &quot;&quot;&quot;</span>
+            SELECT e.id, e.user_id, e.amount, e.description, e.date,
+                   u.username, u.role,
+                   a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
+            FROM expenses e
+            JOIN users u ON e.user_id = u.id
+            JOIN approvals a ON e.id = a.expense_id
+            ORDER BY e.date DESC
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L206">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L208">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="nc" id="L209">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+            
+<span class="nc" id="L211">            ResultSet rs = stmt.executeQuery();</span>
+            
+<span class="nc bnc" id="L213" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L214">                results.add(mapRowToExpenseWithUser(rs));</span>
+            }
+            
+<span class="nc" id="L217">        } catch (SQLException e) {</span>
+<span class="nc" id="L218">            throw new RuntimeException(&quot;Error finding all expenses&quot;, e);</span>
+<span class="nc" id="L219">        }</span>
+        
+<span class="nc" id="L221">        return results;</span>
+    }
+    
+    private Expense mapRowToExpense(ResultSet rs) throws SQLException {
+<span class="nc" id="L225">        Expense expense = new Expense();</span>
+<span class="nc" id="L226">        expense.setId(rs.getInt(&quot;id&quot;));</span>
+<span class="nc" id="L227">        expense.setUserId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="nc" id="L228">        expense.setAmount(rs.getDouble(&quot;amount&quot;));</span>
+<span class="nc" id="L229">        expense.setDescription(rs.getString(&quot;description&quot;));</span>
+<span class="nc" id="L230">        expense.setDate(rs.getString(&quot;date&quot;));</span>
+<span class="nc" id="L231">        return expense;</span>
+    }
+    
+    private ExpenseWithUser mapRowToExpenseWithUser(ResultSet rs) throws SQLException {
+        // Map expense
+<span class="nc" id="L236">        Expense expense = new Expense();</span>
+<span class="nc" id="L237">        expense.setId(rs.getInt(&quot;id&quot;));</span>
+<span class="nc" id="L238">        expense.setUserId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="nc" id="L239">        expense.setAmount(rs.getDouble(&quot;amount&quot;));</span>
+<span class="nc" id="L240">        expense.setDescription(rs.getString(&quot;description&quot;));</span>
+<span class="nc" id="L241">        expense.setDate(rs.getString(&quot;date&quot;));</span>
+        
+        // Map user
+<span class="nc" id="L244">        User user = new User();</span>
+<span class="nc" id="L245">        user.setId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="nc" id="L246">        user.setUsername(rs.getString(&quot;username&quot;));</span>
+<span class="nc" id="L247">        user.setRole(rs.getString(&quot;role&quot;));</span>
+        
+        // Map approval
+<span class="nc" id="L250">        Approval approval = new Approval();</span>
+<span class="nc" id="L251">        approval.setId(rs.getInt(&quot;approval_id&quot;));</span>
+<span class="nc" id="L252">        approval.setExpenseId(rs.getInt(&quot;id&quot;));</span>
+<span class="nc" id="L253">        approval.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="nc" id="L254">        approval.setReviewer((Integer) rs.getObject(&quot;reviewer&quot;));</span>
+<span class="nc" id="L255">        approval.setComment(rs.getString(&quot;comment&quot;));</span>
+<span class="nc" id="L256">        approval.setReviewDate(rs.getString(&quot;review_date&quot;));</span>
+        
+<span class="nc" id="L258">        return new ExpenseWithUser(expense, user, approval);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
