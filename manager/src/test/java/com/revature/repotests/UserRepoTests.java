@@ -6,9 +6,12 @@ import com.revature.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.*;
 import java.util.Optional;
@@ -16,23 +19,27 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class UserRepoTests {
 
+    @InjectMocks
     private UserRepository userRepository;
+
+    @Mock
     private DatabaseConnection mockDbConnection;
+
+    @Mock
     private Connection mockConnection;
+
+    @Mock
     private PreparedStatement mockStmt;
+
+    @Mock
     private ResultSet mockResultSet;
 
     @BeforeEach
     void setUp() throws Exception {
-        mockDbConnection = mock(DatabaseConnection.class);
-        mockConnection = mock(Connection.class);
-        mockStmt = mock(PreparedStatement.class);
-        mockResultSet = mock(ResultSet.class);
-
         when(mockDbConnection.getConnection()).thenReturn(mockConnection);
-        userRepository = new UserRepository(mockDbConnection);
     }
 
     // -------------------

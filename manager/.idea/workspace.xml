@@ -20,9 +20,13 @@
       <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/PythonUnitTest/.idea/PythonUnitTest.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumJava/SeleniumJava01Basics/.idea/.gitignore" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumPython/.idea/SeleniumPython.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/AuthenticationMiddlewareTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/AuthenticationMiddlewareTests.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/UserRepoTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/UserRepoTests.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,10 +57,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.Main.executor": "Run",
+    "JUnit.AuthenticationMiddlewareTests.executor": "Run",
     "JUnit.AuthenticationServiceTests.executor": "Run",
     "JUnit.ManagerTestSuite.executor": "Run",
+    "JUnit.UserRepoTests.executor": "Run",
     "Maven.manager [clean].executor": "Run",
     "Maven.manager [compile].executor": "Run",
+    "Maven.manager [site].executor": "Run",
+    "Maven.manager [verify].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",

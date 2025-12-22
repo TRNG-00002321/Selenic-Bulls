@@ -6,26 +6,28 @@ import com.revature.service.AuthenticationService;
 import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
 import io.javalin.http.UnauthorizedResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class AuthenticationMiddlewareTests {
 
+    @Mock
     private AuthenticationService authService;
-    private AuthenticationMiddleware middleware;
-    private Context ctx;
 
-    @BeforeEach
-    void setUp() {
-        authService = mock(AuthenticationService.class);
-        middleware = new AuthenticationMiddleware(authService);
-        ctx = mock(Context.class);
-    }
+    @InjectMocks
+    private AuthenticationMiddleware middleware;
+
+    @Mock
+    private Context ctx;
 
     @Test
     void testValidateManager_Unauthenticated() throws Exception {
@@ -54,7 +56,6 @@ class AuthenticationMiddlewareTests {
         when(ctx.cookie("jwt")).thenReturn("token");
         when(authService.validateManagerAuthentication("token")).thenReturn(Optional.of(user));
 
-        // Should not throw
         assertDoesNotThrow(() -> middleware.validateManager().handle(ctx));
         verify(ctx).attribute("manager", user);
     }

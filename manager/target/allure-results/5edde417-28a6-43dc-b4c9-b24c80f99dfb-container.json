@@ -1,0 +1,1 @@
+{"uuid":"5edde417-28a6-43dc-b4c9-b24c80f99dfb","name":"Edge case: findByUsername handles SQL exception","children":["c871f0b1-a52f-47f5-9ed0-67fd45468b93"],"befores":[],"afters":[],"start":1766433090258,"stop":1766433090271}

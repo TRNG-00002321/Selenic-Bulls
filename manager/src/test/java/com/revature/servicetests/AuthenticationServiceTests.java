@@ -1,29 +1,31 @@
 package com.revature.servicetests;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import com.revature.repository.User;
 import com.revature.repository.UserRepository;
 import com.revature.service.AuthenticationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTests {
 
+    @Mock
     private UserRepository userRepository;
-    private AuthenticationService authService;
 
-    @BeforeEach
-    void setUp() {
-        userRepository = mock(UserRepository.class);
-        authService = new AuthenticationService(userRepository);
-    }
+    @InjectMocks
+    private AuthenticationService authService;
 
     // =========================
     // authenticateUser tests
