@@ -1,0 +1,1 @@
+Should return all pending expenses when database contains multiple pending records

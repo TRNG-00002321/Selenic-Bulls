@@ -1,0 +1,1 @@
+Retrieved 3 pending expenses for scenario: Happy Path: Multiple Pending Expenses

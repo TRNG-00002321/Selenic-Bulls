@@ -11,16 +11,16 @@ public class Approval {
     private String comment;
     private String reviewDate;
     
-<span class="nc" id="L14">    public Approval() {}</span>
+<span class="fc" id="L14">    public Approval() {}</span>
     
-<span class="nc" id="L16">    public Approval(int id, int expenseId, String status, Integer reviewer, String comment, String reviewDate) {</span>
-<span class="nc" id="L17">        this.id = id;</span>
-<span class="nc" id="L18">        this.expenseId = expenseId;</span>
-<span class="nc" id="L19">        this.status = status;</span>
-<span class="nc" id="L20">        this.reviewer = reviewer;</span>
-<span class="nc" id="L21">        this.comment = comment;</span>
-<span class="nc" id="L22">        this.reviewDate = reviewDate;</span>
-<span class="nc" id="L23">    }</span>
+<span class="fc" id="L16">    public Approval(int id, int expenseId, String status, Integer reviewer, String comment, String reviewDate) {</span>
+<span class="fc" id="L17">        this.id = id;</span>
+<span class="fc" id="L18">        this.expenseId = expenseId;</span>
+<span class="fc" id="L19">        this.status = status;</span>
+<span class="fc" id="L20">        this.reviewer = reviewer;</span>
+<span class="fc" id="L21">        this.comment = comment;</span>
+<span class="fc" id="L22">        this.reviewDate = reviewDate;</span>
+<span class="fc" id="L23">    }</span>
     
     // Getters and setters
     public int getId() {
@@ -28,48 +28,48 @@ public class Approval {
     }
     
     public void setId(int id) {
-<span class="nc" id="L31">        this.id = id;</span>
-<span class="nc" id="L32">    }</span>
+<span class="fc" id="L31">        this.id = id;</span>
+<span class="fc" id="L32">    }</span>
     
     public int getExpenseId() {
 <span class="nc" id="L35">        return expenseId;</span>
     }
     
     public void setExpenseId(int expenseId) {
-<span class="nc" id="L39">        this.expenseId = expenseId;</span>
-<span class="nc" id="L40">    }</span>
+<span class="fc" id="L39">        this.expenseId = expenseId;</span>
+<span class="fc" id="L40">    }</span>
     
     public String getStatus() {
-<span class="nc" id="L43">        return status;</span>
+<span class="fc" id="L43">        return status;</span>
     }
     
     public void setStatus(String status) {
-<span class="nc" id="L47">        this.status = status;</span>
-<span class="nc" id="L48">    }</span>
+<span class="fc" id="L47">        this.status = status;</span>
+<span class="fc" id="L48">    }</span>
     
     public Integer getReviewer() {
 <span class="nc" id="L51">        return reviewer;</span>
     }
     
     public void setReviewer(Integer reviewer) {
-<span class="nc" id="L55">        this.reviewer = reviewer;</span>
-<span class="nc" id="L56">    }</span>
+<span class="fc" id="L55">        this.reviewer = reviewer;</span>
+<span class="fc" id="L56">    }</span>
     
     public String getComment() {
 <span class="nc" id="L59">        return comment;</span>
     }
     
     public void setComment(String comment) {
-<span class="nc" id="L63">        this.comment = comment;</span>
-<span class="nc" id="L64">    }</span>
+<span class="fc" id="L63">        this.comment = comment;</span>
+<span class="fc" id="L64">    }</span>
     
     public String getReviewDate() {
 <span class="nc" id="L67">        return reviewDate;</span>
     }
     
     public void setReviewDate(String reviewDate) {
-<span class="nc" id="L71">        this.reviewDate = reviewDate;</span>
-<span class="nc" id="L72">    }</span>
+<span class="fc" id="L71">        this.reviewDate = reviewDate;</span>
+<span class="fc" id="L72">    }</span>
     
     public boolean isPending() {
 <span class="nc" id="L75">        return &quot;pending&quot;.equalsIgnoreCase(status);</span>
@@ -77,7 +77,7 @@ public class Approval {
     
     @Override
     public String toString() {
-<span class="nc" id="L80">        return &quot;Approval{&quot; +</span>
+<span class="fc" id="L80">        return &quot;Approval{&quot; +</span>
                 &quot;id=&quot; + id +
                 &quot;, expenseId=&quot; + expenseId +
                 &quot;, status='&quot; + status + '\'' +

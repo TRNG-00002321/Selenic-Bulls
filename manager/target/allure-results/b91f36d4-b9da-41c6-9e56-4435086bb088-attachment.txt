@@ -1,0 +1,1 @@
+JSON response contains 1 pending expenses with success=true for scenario: Boundary Case: Single Pending Expense

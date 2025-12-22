@@ -1,0 +1,1 @@
+Should propagate RuntimeException when repository encounters database issues (wrapped SQLException)

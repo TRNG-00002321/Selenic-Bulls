@@ -1,0 +1,1 @@
+{"uuid":"51614966-59de-42af-8fa7-74bb6a82c4e1","name":"[4] Sad Path: Service Exception, null, true, -1, Should throw InternalServerErrorResponse when service layer fails","children":["a7aeae6b-b9bd-4161-a2ab-8213ba1a9f0f"],"befores":[],"afters":[],"start":1766374942890,"stop":1766374942949}

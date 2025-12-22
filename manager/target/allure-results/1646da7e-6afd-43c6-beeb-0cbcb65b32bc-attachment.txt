@@ -1,0 +1,1 @@
+Should return empty list when no pending expenses exist in database

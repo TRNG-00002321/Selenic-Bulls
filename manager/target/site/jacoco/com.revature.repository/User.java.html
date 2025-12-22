@@ -9,14 +9,14 @@ public class User {
     private String password;
     private String role;
     
-<span class="nc" id="L12">    public User() {}</span>
+<span class="fc" id="L12">    public User() {}</span>
     
-<span class="nc" id="L14">    public User(int id, String username, String password, String role) {</span>
-<span class="nc" id="L15">        this.id = id;</span>
-<span class="nc" id="L16">        this.username = username;</span>
-<span class="nc" id="L17">        this.password = password;</span>
-<span class="nc" id="L18">        this.role = role;</span>
-<span class="nc" id="L19">    }</span>
+<span class="fc" id="L14">    public User(int id, String username, String password, String role) {</span>
+<span class="fc" id="L15">        this.id = id;</span>
+<span class="fc" id="L16">        this.username = username;</span>
+<span class="fc" id="L17">        this.password = password;</span>
+<span class="fc" id="L18">        this.role = role;</span>
+<span class="fc" id="L19">    }</span>
     
     // Getters and setters
     public int getId() {
@@ -24,16 +24,16 @@ public class User {
     }
     
     public void setId(int id) {
-<span class="nc" id="L27">        this.id = id;</span>
-<span class="nc" id="L28">    }</span>
+<span class="fc" id="L27">        this.id = id;</span>
+<span class="fc" id="L28">    }</span>
     
     public String getUsername() {
 <span class="nc" id="L31">        return username;</span>
     }
     
     public void setUsername(String username) {
-<span class="nc" id="L35">        this.username = username;</span>
-<span class="nc" id="L36">    }</span>
+<span class="fc" id="L35">        this.username = username;</span>
+<span class="fc" id="L36">    }</span>
     
     public String getPassword() {
 <span class="nc" id="L39">        return password;</span>
@@ -48,8 +48,8 @@ public class User {
     }
     
     public void setRole(String role) {
-<span class="nc" id="L51">        this.role = role;</span>
-<span class="nc" id="L52">    }</span>
+<span class="fc" id="L51">        this.role = role;</span>
+<span class="fc" id="L52">    }</span>
     
     public boolean isManager() {
 <span class="nc" id="L55">        return &quot;manager&quot;.equalsIgnoreCase(role);</span>
@@ -57,7 +57,7 @@ public class User {
     
     @Override
     public String toString() {
-<span class="nc" id="L60">        return &quot;User{&quot; +</span>
+<span class="fc" id="L60">        return &quot;User{&quot; +</span>
                 &quot;id=&quot; + id +
                 &quot;, username='&quot; + username + '\'' +
                 &quot;, role='&quot; + role + '\'' +

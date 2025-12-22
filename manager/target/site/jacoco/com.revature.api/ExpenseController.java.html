@@ -18,9 +18,9 @@ import java.util.Map;
 public class ExpenseController {
     private final ExpenseService expenseService;
     
-<span class="nc" id="L21">    public ExpenseController(ExpenseService expenseService) {</span>
-<span class="nc" id="L22">        this.expenseService = expenseService;</span>
-<span class="nc" id="L23">    }</span>
+<span class="fc" id="L21">    public ExpenseController(ExpenseService expenseService) {</span>
+<span class="fc" id="L22">        this.expenseService = expenseService;</span>
+<span class="fc" id="L23">    }</span>
     
     /**
      * Get all pending expenses for manager review.
@@ -28,16 +28,16 @@ public class ExpenseController {
      */
     public void getPendingExpenses(Context ctx) {
         try {
-<span class="nc" id="L31">            List&lt;ExpenseWithUser&gt; pendingExpenses = expenseService.getPendingExpenses();</span>
-<span class="nc" id="L32">            ctx.json(Map.of(</span>
-<span class="nc" id="L33">                &quot;success&quot;, true,</span>
+<span class="fc" id="L31">            List&lt;ExpenseWithUser&gt; pendingExpenses = expenseService.getPendingExpenses();</span>
+<span class="fc" id="L32">            ctx.json(Map.of(</span>
+<span class="fc" id="L33">                &quot;success&quot;, true,</span>
                 &quot;data&quot;, pendingExpenses,
-<span class="nc" id="L35">                &quot;count&quot;, pendingExpenses.size()</span>
+<span class="fc" id="L35">                &quot;count&quot;, pendingExpenses.size()</span>
             ));
-<span class="nc" id="L37">        } catch (Exception e) {</span>
-<span class="nc" id="L38">            throw new InternalServerErrorResponse(&quot;Failed to retrieve pending expenses: &quot; + e.getMessage());</span>
-<span class="nc" id="L39">        }</span>
-<span class="nc" id="L40">    }</span>
+<span class="fc" id="L37">        } catch (Exception e) {</span>
+<span class="fc" id="L38">            throw new InternalServerErrorResponse(&quot;Failed to retrieve pending expenses: &quot; + e.getMessage());</span>
+<span class="fc" id="L39">        }</span>
+<span class="fc" id="L40">    }</span>
     
     /**
      * Approve an expense.

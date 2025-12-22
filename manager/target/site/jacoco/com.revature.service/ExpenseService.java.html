@@ -17,17 +17,17 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ApprovalRepository approvalRepository;
     
-<span class="nc" id="L20">    public ExpenseService(ExpenseRepository expenseRepository, ApprovalRepository approvalRepository) {</span>
-<span class="nc" id="L21">        this.expenseRepository = expenseRepository;</span>
-<span class="nc" id="L22">        this.approvalRepository = approvalRepository;</span>
-<span class="nc" id="L23">    }</span>
+<span class="fc" id="L20">    public ExpenseService(ExpenseRepository expenseRepository, ApprovalRepository approvalRepository) {</span>
+<span class="fc" id="L21">        this.expenseRepository = expenseRepository;</span>
+<span class="fc" id="L22">        this.approvalRepository = approvalRepository;</span>
+<span class="fc" id="L23">    }</span>
     
     /**
      * Get all pending expenses for manager review.
      * @return List of pending expenses with user information
      */
     public List&lt;ExpenseWithUser&gt; getPendingExpenses() {
-<span class="nc" id="L30">        return expenseRepository.findPendingExpensesWithUsers();</span>
+<span class="fc" id="L30">        return expenseRepository.findPendingExpensesWithUsers();</span>
     }
     
     /**

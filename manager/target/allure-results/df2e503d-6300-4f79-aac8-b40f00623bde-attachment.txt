@@ -1,0 +1,1 @@
+Should return single expense when only one pending expense exists in database

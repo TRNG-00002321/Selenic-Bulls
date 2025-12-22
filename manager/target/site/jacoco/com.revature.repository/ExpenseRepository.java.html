@@ -15,9 +15,9 @@ import java.util.Optional;
 public class ExpenseRepository {
     private final DatabaseConnection databaseConnection;
     
-<span class="nc" id="L18">    public ExpenseRepository(DatabaseConnection databaseConnection) {</span>
-<span class="nc" id="L19">        this.databaseConnection = databaseConnection;</span>
-<span class="nc" id="L20">    }</span>
+<span class="fc" id="L18">    public ExpenseRepository(DatabaseConnection databaseConnection) {</span>
+<span class="fc" id="L19">        this.databaseConnection = databaseConnection;</span>
+<span class="fc" id="L20">    }</span>
     
     /**
      * Find an expense by its ID.
@@ -49,7 +49,7 @@ public class ExpenseRepository {
      * @return List of ExpenseWithUser objects for pending expenses
      */
     public List&lt;ExpenseWithUser&gt; findPendingExpensesWithUsers() {
-<span class="nc" id="L52">        String sql = &quot;&quot;&quot;</span>
+<span class="fc" id="L52">        String sql = &quot;&quot;&quot;</span>
             SELECT e.id, e.user_id, e.amount, e.description, e.date,
                    u.username, u.role,
                    a.id as approval_id, a.status, a.reviewer, a.comment, a.review_date
@@ -60,22 +60,22 @@ public class ExpenseRepository {
             ORDER BY e.date DESC
             &quot;&quot;&quot;;
         
-<span class="nc" id="L63">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L63">        List&lt;ExpenseWithUser&gt; results = new ArrayList&lt;&gt;();</span>
         
-<span class="nc" id="L65">        try (Connection conn = databaseConnection.getConnection();</span>
-<span class="nc" id="L66">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L65">        try (Connection conn = databaseConnection.getConnection();</span>
+<span class="fc" id="L66">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
             
-<span class="nc" id="L68">            ResultSet rs = stmt.executeQuery();</span>
+<span class="fc" id="L68">            ResultSet rs = stmt.executeQuery();</span>
             
-<span class="nc bnc" id="L70" title="All 2 branches missed.">            while (rs.next()) {</span>
-<span class="nc" id="L71">                results.add(mapRowToExpenseWithUser(rs));</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L71">                results.add(mapRowToExpenseWithUser(rs));</span>
             }
             
-<span class="nc" id="L74">        } catch (SQLException e) {</span>
-<span class="nc" id="L75">            throw new RuntimeException(&quot;Error finding pending expenses&quot;, e);</span>
-<span class="nc" id="L76">        }</span>
+<span class="fc" id="L74">        } catch (SQLException e) {</span>
+<span class="fc" id="L75">            throw new RuntimeException(&quot;Error finding pending expenses&quot;, e);</span>
+<span class="fc" id="L76">        }</span>
         
-<span class="nc" id="L78">        return results;</span>
+<span class="fc" id="L78">        return results;</span>
     }
     
     /**
@@ -233,29 +233,29 @@ public class ExpenseRepository {
     
     private ExpenseWithUser mapRowToExpenseWithUser(ResultSet rs) throws SQLException {
         // Map expense
-<span class="nc" id="L236">        Expense expense = new Expense();</span>
-<span class="nc" id="L237">        expense.setId(rs.getInt(&quot;id&quot;));</span>
-<span class="nc" id="L238">        expense.setUserId(rs.getInt(&quot;user_id&quot;));</span>
-<span class="nc" id="L239">        expense.setAmount(rs.getDouble(&quot;amount&quot;));</span>
-<span class="nc" id="L240">        expense.setDescription(rs.getString(&quot;description&quot;));</span>
-<span class="nc" id="L241">        expense.setDate(rs.getString(&quot;date&quot;));</span>
+<span class="fc" id="L236">        Expense expense = new Expense();</span>
+<span class="fc" id="L237">        expense.setId(rs.getInt(&quot;id&quot;));</span>
+<span class="fc" id="L238">        expense.setUserId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="fc" id="L239">        expense.setAmount(rs.getDouble(&quot;amount&quot;));</span>
+<span class="fc" id="L240">        expense.setDescription(rs.getString(&quot;description&quot;));</span>
+<span class="fc" id="L241">        expense.setDate(rs.getString(&quot;date&quot;));</span>
         
         // Map user
-<span class="nc" id="L244">        User user = new User();</span>
-<span class="nc" id="L245">        user.setId(rs.getInt(&quot;user_id&quot;));</span>
-<span class="nc" id="L246">        user.setUsername(rs.getString(&quot;username&quot;));</span>
-<span class="nc" id="L247">        user.setRole(rs.getString(&quot;role&quot;));</span>
+<span class="fc" id="L244">        User user = new User();</span>
+<span class="fc" id="L245">        user.setId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="fc" id="L246">        user.setUsername(rs.getString(&quot;username&quot;));</span>
+<span class="fc" id="L247">        user.setRole(rs.getString(&quot;role&quot;));</span>
         
         // Map approval
-<span class="nc" id="L250">        Approval approval = new Approval();</span>
-<span class="nc" id="L251">        approval.setId(rs.getInt(&quot;approval_id&quot;));</span>
-<span class="nc" id="L252">        approval.setExpenseId(rs.getInt(&quot;id&quot;));</span>
-<span class="nc" id="L253">        approval.setStatus(rs.getString(&quot;status&quot;));</span>
-<span class="nc" id="L254">        approval.setReviewer((Integer) rs.getObject(&quot;reviewer&quot;));</span>
-<span class="nc" id="L255">        approval.setComment(rs.getString(&quot;comment&quot;));</span>
-<span class="nc" id="L256">        approval.setReviewDate(rs.getString(&quot;review_date&quot;));</span>
+<span class="fc" id="L250">        Approval approval = new Approval();</span>
+<span class="fc" id="L251">        approval.setId(rs.getInt(&quot;approval_id&quot;));</span>
+<span class="fc" id="L252">        approval.setExpenseId(rs.getInt(&quot;id&quot;));</span>
+<span class="fc" id="L253">        approval.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L254">        approval.setReviewer((Integer) rs.getObject(&quot;reviewer&quot;));</span>
+<span class="fc" id="L255">        approval.setComment(rs.getString(&quot;comment&quot;));</span>
+<span class="fc" id="L256">        approval.setReviewDate(rs.getString(&quot;review_date&quot;));</span>
         
-<span class="nc" id="L258">        return new ExpenseWithUser(expense, user, approval);</span>
+<span class="fc" id="L258">        return new ExpenseWithUser(expense, user, approval);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
