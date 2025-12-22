@@ -93,13 +93,13 @@ class AuthenticationServiceTests {
     // =========================
     // isManager tests
     // =========================
+    @DisplayName("isManager returns true only for Manager role")
     @ParameterizedTest(name = "role={0}")
     @CsvSource({
             "Manager",
             "Employee",
-            ""
+            "''"
     })
-    @DisplayName("isManager returns true only for Manager role")
     void testIsManager(String role) {
         User user = new User();
         user.setRole(role);
@@ -116,11 +116,14 @@ class AuthenticationServiceTests {
     // =========================
     // validateJwtToken edge case
     // =========================
-    @org.junit.jupiter.api.Test
     @DisplayName("validateJwtToken returns empty for null/blank")
-    void testValidateJwtToken_NullOrBlank() {
-        assertTrue(authService.validateJwtToken(null).isEmpty());
-        assertTrue(authService.validateJwtToken("").isEmpty());
-        assertTrue(authService.validateJwtToken("   ").isEmpty());
+    @ParameterizedTest(name = "input={0}")
+    @CsvSource({
+            "null",
+            "'              '",
+            "''"
+    })
+    void testValidateJwtToken_NullOrBlank(String input) {
+        assertTrue(authService.validateJwtToken(input).isEmpty());
     }
 }

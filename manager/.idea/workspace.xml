@@ -21,11 +21,8 @@
       <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumJava/SeleniumJava01Basics/.idea/.gitignore" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumPython/.idea/SeleniumPython.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/AuthenticationMiddlewareTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/AuthenticationMiddlewareTests.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/UserRepoTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/UserRepoTests.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -59,6 +56,7 @@
     "Application.Main.executor": "Run",
     "JUnit.AuthenticationMiddlewareTests.executor": "Run",
     "JUnit.AuthenticationServiceTests.executor": "Run",
+    "JUnit.AuthenticationServiceTests.testIsManager.executor": "Run",
     "JUnit.ManagerTestSuite.executor": "Run",
     "JUnit.UserRepoTests.executor": "Run",
     "Maven.manager [clean].executor": "Run",
@@ -91,8 +89,42 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="AuthenticationServiceTests.testIsManager" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="manager" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.revature.servicetests.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.revature.servicetests" />
+      <option name="MAIN_CLASS_NAME" value="com.revature.servicetests.AuthenticationServiceTests" />
+      <option name="METHOD_NAME" value="testIsManager(java.lang.String)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AuthenticationServiceTests.testValidateJwtToken_NullOrBlank" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="manager" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.revature.servicetests.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.revature.servicetests" />
+      <option name="MAIN_CLASS_NAME" value="com.revature.servicetests.AuthenticationServiceTests" />
+      <option name="METHOD_NAME" value="testValidateJwtToken_NullOrBlank(java.lang.String)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.AuthenticationServiceTests.testValidateJwtToken_NullOrBlank" />
+        <item itemvalue="JUnit.AuthenticationServiceTests.testIsManager" />
         <item itemvalue="Application.Main" />
       </list>
     </recent_temporary>
@@ -106,5 +138,20 @@
       <updated>1765207840100</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-method">
+          <url>file://$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java</url>
+          <line>102</line>
+          <properties class="com.revature.servicetests.AuthenticationServiceTests" method="testIsManager">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
