@@ -1,0 +1,7 @@
+com\revature\ManagerTestSuite.class
+com\revature\repotests\UserRepoTests.class
+com\revature\servicetests\AuthenticationServiceTests.class
+com\revature\controllertests\AuthenticationMiddlewareTests.class
+com\revature\repotests\GetPendingExpenseRepoTest.class
+com\revature\controllertests\GetPendingExpenseControllerTest.class
+com\revature\servicetests\GetPendingExpenseServiceTest.class

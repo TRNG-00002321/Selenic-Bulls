@@ -5,15 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="23e0dc6d-2de3-45f7-a8e6-26576ad559f8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../employee/tests/controller_tests/test_expense_api_employee.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../employee/tests/repository_tests/test_expense_repository_employee.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../employee/tests/service_tests/test_expense_service_employee.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../employee/tests/Calculator.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../employee/tests/test_sum.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/ManagerTestSuite.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/ManagerTestSuite.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test03XpathLocators.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test04ElementInteractions.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test05NavigationMethods.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test07SelectClass.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test08Options.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test09ActionClass.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test10AlertsWindows.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/Test11ScreenShots.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/SeleniumDemo/src/test/java/com/revature/tests/test06WaitingStrategies.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/BehavePython/BehaveDemo/.idea/BehaveDemo.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/PythonAPITest/.idea/PythonAPITest.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/PythonMocking/mockingdemo/.idea/mockingdemo.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/PythonUnitTest/.idea/PythonUnitTest.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumJava/SeleniumJava01Basics/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/TR-2321-Code-main/SeleniumPython/.idea/SeleniumPython.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +53,8 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.Main.executor": "Run",
+    "JUnit.AuthenticationServiceTests.executor": "Run",
+    "JUnit.ManagerTestSuite.executor": "Run",
     "Maven.manager [clean].executor": "Run",
     "Maven.manager [compile].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
