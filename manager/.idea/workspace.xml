@@ -5,11 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="23e0dc6d-2de3-45f7-a8e6-26576ad559f8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../employee/.idea/employee.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../employee/.idea/employee.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../employee/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../employee/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/revature/repository/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/revature/repository/DatabaseConnection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/allure.properties" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/../employee/tests/controller_tests/test_expense_api_employee.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../employee/tests/repository_tests/test_expense_repository_employee.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../employee/tests/service_tests/test_expense_service_employee.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/controllertests/AuthenticationMiddlewareTests.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/repotests/UserRepoTests.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/com/revature/servicetests/AuthenticationServiceTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../employee/tests/Calculator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../employee/tests/test_sum.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/revature/ManagerTestSuite.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/revature/ManagerTestSuite.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +34,9 @@
   &quot;associatedIndex&quot;: 7
 }</component>
   <component name="ProjectId" id="36ZIoDbV52biTqzPOru8kGjfriw" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -44,7 +51,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "stephenie",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/Stephenie/Documents/Revature/Project1QAsuals/manager",

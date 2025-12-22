@@ -1,14 +1,15 @@
 package com.revature;
 import org.junit.platform.suite.api.*;
 
-import com.revature.controllertests.GetPendingExpenseControllerTest;
-
-// Marks the class as a test suite
 @Suite
-// Sets a display name for the suite in reports
-@SuiteDisplayName("")
-// Selects the specific classes to include in this suite
-@SelectClasses({GetPendingExpenseControllerTest.class})
+// Sets a display name for the suite
+@SuiteDisplayName("Manager Tests")
+// Selects the specific packages to use in the Suite
+@SelectPackages({
+        "com.revature.controllertests",
+        "com.revature.repotests",
+        "com.revature.servicetests",
+})
 public class ManagerTestSuite
 {
         
