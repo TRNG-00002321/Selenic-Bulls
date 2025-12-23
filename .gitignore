@@ -2,6 +2,6 @@
 myenv/
 DatabaseConnection.java
 target/
-.pytest_cache
-allure-results
-allure-report
+.pytest_cache/
+allure-results/
+allure-report/
