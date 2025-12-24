@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.revature.repotests.UserRepoTests
--------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.739 s -- in com.revature.repotests.UserRepoTests
