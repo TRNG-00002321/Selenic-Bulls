@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Main.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">manager</a> &gt; <a href="index.source.html" class="el_package">com.revature</a> &gt; <span class="el_source">Main.java</span></div><h1>Main.java</h1><pre class="source lang-java linenums">package com.revature;
+
+import com.revature.api.AuthenticationMiddleware;
+import com.revature.api.ExpenseController;
+import com.revature.api.ReportController;
+import com.revature.repository.DatabaseConnection;
+import com.revature.repository.UserRepository;
+import com.revature.repository.ExpenseRepository;
+import com.revature.repository.User;
+import com.revature.repository.ApprovalRepository;
+import com.revature.service.AuthenticationService;
+import com.revature.service.ExpenseService;
+
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+
+import java.util.Map;
+
+/**
+ * Main application class for the Revature Expense Manager (Manager App).
+ * Sets up dependency injection and configures Javalin web server with REST endpoints.
+ */
+<span class="nc" id="L23">public class Main {</span>
+    private static final int PORT = 5001;
+    
+    public static void main(String[] args) {
+        // Initialize dependencies using constructor dependency injection
+<span class="nc" id="L28">        DatabaseConnection databaseConnection = new DatabaseConnection();</span>
+        
+        // Repository layer
+<span class="nc" id="L31">        UserRepository userRepository = new UserRepository(databaseConnection);</span>
+<span class="nc" id="L32">        ExpenseRepository expenseRepository = new ExpenseRepository(databaseConnection);</span>
+<span class="nc" id="L33">        ApprovalRepository approvalRepository = new ApprovalRepository(databaseConnection);</span>
+        
+        // Service layer
+<span class="nc" id="L36">        AuthenticationService authenticationService = new AuthenticationService(userRepository);</span>
+<span class="nc" id="L37">        ExpenseService expenseService = new ExpenseService(expenseRepository, approvalRepository);</span>
+        
+        // API layer
+<span class="nc" id="L40">        AuthenticationMiddleware authMiddleware = new AuthenticationMiddleware(authenticationService);</span>
+<span class="nc" id="L41">        ExpenseController expenseController = new ExpenseController(expenseService);</span>
+<span class="nc" id="L42">        ReportController reportController = new ReportController(expenseService);</span>
+        
+        // Configure and start Javalin application
+<span class="nc" id="L45">        Javalin app = Javalin.create(config -&gt; {</span>
+            // Enable CORS for cross-origin requests from frontend
+<span class="nc" id="L47">            config.bundledPlugins.enableCors(cors -&gt; {</span>
+<span class="nc" id="L48">                cors.addRule(it -&gt; {</span>
+<span class="nc" id="L49">                    it.allowHost(&quot;http://127.0.0.1:5000&quot;);</span>
+<span class="nc" id="L50">                    it.allowHost(&quot;http://localhost:5000&quot;);</span>
+<span class="nc" id="L51">                    it.allowCredentials = true;</span>
+<span class="nc" id="L52">                });</span>
+<span class="nc" id="L53">            });</span>
+            
+            // Enable static file serving from resources
+<span class="nc" id="L56">            config.staticFiles.add(staticFiles -&gt; {</span>
+<span class="nc" id="L57">                staticFiles.hostedPath = &quot;/&quot;;</span>
+<span class="nc" id="L58">                staticFiles.directory = &quot;/&quot;;</span>
+<span class="nc" id="L59">                staticFiles.location = Location.CLASSPATH;</span>
+<span class="nc" id="L60">            });</span>
+            
+            // Enable request logging
+<span class="nc" id="L63">            config.bundledPlugins.enableDevLogging();</span>
+<span class="nc" id="L64">        });</span>
+        
+        // Global exception handling
+<span class="nc" id="L67">        app.exception(Exception.class, (e, ctx) -&gt; {</span>
+<span class="nc" id="L68">            ctx.status(500);</span>
+<span class="nc" id="L69">            ctx.json(java.util.Map.of(</span>
+<span class="nc" id="L70">                &quot;success&quot;, false,</span>
+                &quot;error&quot;, &quot;Internal server error&quot;,
+<span class="nc" id="L72">                &quot;message&quot;, e.getMessage()</span>
+            ));
+<span class="nc" id="L74">        });</span>
+        
+        // Root redirect to manager dashboard
+<span class="nc" id="L77">        app.get(&quot;/&quot;, ctx -&gt; ctx.redirect(&quot;/manager.html&quot;));</span>
+        
+        // Authentication status endpoint (no auth required)
+<span class="nc" id="L80">        app.get(&quot;/api/auth/status&quot;, ctx -&gt; {</span>
+<span class="nc" id="L81">            String jwtToken = ctx.cookie(&quot;jwt&quot;);</span>
+            
+<span class="nc" id="L83">            java.util.Optional&lt;com.revature.repository.User&gt; managerOpt = authenticationService.validateManagerAuthentication(jwtToken);</span>
+            
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            if (managerOpt.isPresent()) {</span>
+<span class="nc" id="L86">                com.revature.repository.User manager = managerOpt.get();</span>
+<span class="nc" id="L87">                ctx.json(java.util.Map.of(</span>
+<span class="nc" id="L88">                    &quot;authenticated&quot;, true,</span>
+<span class="nc" id="L89">                    &quot;user&quot;, java.util.Map.of(</span>
+<span class="nc" id="L90">                        &quot;id&quot;, manager.getId(),</span>
+<span class="nc" id="L91">                        &quot;username&quot;, manager.getUsername(),</span>
+<span class="nc" id="L92">                        &quot;role&quot;, manager.getRole()</span>
+                    )
+                ));
+<span class="nc" id="L95">            } else {</span>
+<span class="nc" id="L96">                ctx.json(java.util.Map.of(&quot;authenticated&quot;, false));</span>
+            }
+<span class="nc" id="L98">        });</span>
+        
+        // Manager login endpoint (no auth required)
+<span class="nc" id="L101">        app.post(&quot;/api/auth/login&quot;, ctx -&gt; {</span>
+            try {
+                // Parse login request
+                // @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L105">                User loginData = ctx.bodyAsClass(User.class);</span>
+<span class="nc" id="L106">                System.out.println(&quot;Login attempt for user: &quot; + loginData.getUsername());</span>
+<span class="nc" id="L107">                String username = loginData.getUsername();</span>
+<span class="nc" id="L108">                String password = loginData.getPassword();</span>
+
+<span class="nc bnc" id="L110" title="All 4 branches missed.">                if (username == null || password == null) {</span>
+<span class="nc" id="L111">                    ctx.status(400);</span>
+<span class="nc" id="L112">                    ctx.json(Map.of(</span>
+<span class="nc" id="L113">                        &quot;success&quot;, false,</span>
+                        &quot;error&quot;, &quot;Username and password are required&quot;
+                    ));
+<span class="nc" id="L116">                    return;</span>
+                }
+                
+                // Authenticate manager
+<span class="nc" id="L120">                System.out.println(&quot;Attempting authentication for user: &quot; + username);</span>
+<span class="nc" id="L121">                java.util.Optional&lt;com.revature.repository.User&gt; managerOpt = authenticationService.authenticateManager(username, password);</span>
+                
+<span class="nc bnc" id="L123" title="All 2 branches missed.">                if (managerOpt.isPresent()) {</span>
+<span class="nc" id="L124">                    System.out.println(&quot;Authentication successful for user: &quot; + username);</span>
+<span class="nc" id="L125">                    com.revature.repository.User manager = managerOpt.get();</span>
+                    
+                    // Create JWT token
+<span class="nc" id="L128">                    String jwtToken = authenticationService.createJwtToken(manager);</span>
+                    
+                    // Set JWT as HTTP-only cookie
+<span class="nc" id="L131">                    ctx.cookie(&quot;jwt&quot;, jwtToken, 24 * 60 * 60); // 24 hours expiry</span>
+                    
+<span class="nc" id="L133">                    ctx.status(200);</span>
+<span class="nc" id="L134">                    ctx.json(Map.of(</span>
+<span class="nc" id="L135">                        &quot;success&quot;, true,</span>
+                        &quot;message&quot;, &quot;Login successful&quot;,
+<span class="nc" id="L137">                        &quot;user&quot;, Map.of(</span>
+<span class="nc" id="L138">                            &quot;id&quot;, manager.getId(),</span>
+<span class="nc" id="L139">                            &quot;username&quot;, manager.getUsername(),</span>
+<span class="nc" id="L140">                            &quot;role&quot;, manager.getRole()</span>
+                        )
+                    ));
+<span class="nc" id="L143">                } else {</span>
+<span class="nc" id="L144">                    ctx.status(401);</span>
+<span class="nc" id="L145">                    ctx.json(Map.of(</span>
+<span class="nc" id="L146">                        &quot;success&quot;, false,</span>
+                        &quot;error&quot;, &quot;Invalid credentials or user is not a manager&quot;
+                    ));
+                }
+<span class="nc" id="L150">            } catch (Exception e) {</span>
+<span class="nc" id="L151">                ctx.status(400);</span>
+<span class="nc" id="L152">                ctx.json(Map.of(</span>
+<span class="nc" id="L153">                    &quot;success&quot;, false,</span>
+                    &quot;error&quot;, &quot;Invalid request format&quot;
+                ));
+<span class="nc" id="L156">            }</span>
+<span class="nc" id="L157">        });</span>
+        
+        // Manager logout endpoint (no auth required)
+<span class="nc" id="L160">        app.post(&quot;/api/auth/logout&quot;, ctx -&gt; {</span>
+            // Clear the JWT cookie
+<span class="nc" id="L162">            ctx.removeCookie(&quot;jwt&quot;);</span>
+<span class="nc" id="L163">            ctx.json(Map.of(</span>
+<span class="nc" id="L164">                &quot;success&quot;, true,</span>
+                &quot;message&quot;, &quot;Logged out successfully&quot;
+            ));
+<span class="nc" id="L167">        });</span>
+        
+        // Protected routes - require manager authentication
+<span class="nc" id="L170">        app.before(&quot;/api/expenses/*&quot;, authMiddleware.validateManager());</span>
+<span class="nc" id="L171">        app.before(&quot;/api/reports/*&quot;, authMiddleware.validateManager());</span>
+        
+        // Expense management endpoints
+<span class="nc" id="L174">        app.get(&quot;/api/expenses&quot;, expenseController::getAllExpenses);</span>
+<span class="nc" id="L175">        app.get(&quot;/api/expenses/pending&quot;, expenseController::getPendingExpenses);</span>
+<span class="nc" id="L176">        app.get(&quot;/api/expenses/employee/{employeeId}&quot;, expenseController::getExpensesByEmployee);</span>
+<span class="nc" id="L177">        app.post(&quot;/api/expenses/{expenseId}/approve&quot;, expenseController::approveExpense);</span>
+<span class="nc" id="L178">        app.post(&quot;/api/expenses/{expenseId}/deny&quot;, expenseController::denyExpense);</span>
+        
+        // Report generation endpoints
+<span class="nc" id="L181">        app.get(&quot;/api/reports/expenses/csv&quot;, reportController::generateAllExpensesReport);</span>
+<span class="nc" id="L182">        app.get(&quot;/api/reports/expenses/pending/csv&quot;, reportController::generatePendingExpensesReport);</span>
+<span class="nc" id="L183">        app.get(&quot;/api/reports/expenses/employee/{employeeId}/csv&quot;, reportController::generateEmployeeExpensesReport);</span>
+<span class="nc" id="L184">        app.get(&quot;/api/reports/expenses/category/{category}/csv&quot;, reportController::generateCategoryExpensesReport);</span>
+<span class="nc" id="L185">        app.get(&quot;/api/reports/expenses/daterange/csv&quot;, reportController::generateDateRangeExpensesReport);</span>
+        
+        // Root route - serve manager dashboard
+        
+        // Health check endpoint
+<span class="nc" id="L190">        app.get(&quot;/health&quot;, ctx -&gt; ctx.json(java.util.Map.of(</span>
+            &quot;status&quot;, &quot;healthy&quot;,
+            &quot;service&quot;, &quot;expense-manager-api&quot;,
+            &quot;version&quot;, &quot;1.0.0&quot;
+        )));
+        
+        // Start the server
+<span class="nc" id="L197">        app.start(PORT);</span>
+        
+<span class="nc" id="L199">        System.out.println(&quot;   Expense Manager API (Manager App) started successfully!&quot;);</span>
+<span class="nc" id="L200">        System.out.println(&quot;   Server running on: http://localhost:&quot; + PORT);</span>
+<span class="nc" id="L201">        System.out.println(&quot;   Health check: http://localhost:&quot; + PORT + &quot;/health&quot;);</span>
+<span class="nc" id="L202">        System.out.println(&quot;   API Documentation:&quot;);</span>
+<span class="nc" id="L203">        System.out.println(&quot;   Authentication Status: GET /api/auth/status&quot;);</span>
+<span class="nc" id="L204">        System.out.println(&quot;   Pending Expenses: GET /api/expenses/pending&quot;);</span>
+<span class="nc" id="L205">        System.out.println(&quot;   All Expenses: GET /api/expenses&quot;);</span>
+<span class="nc" id="L206">        System.out.println(&quot;   Employee Expenses: GET /api/expenses/employee/{employeeId}&quot;);</span>
+<span class="nc" id="L207">        System.out.println(&quot;   Approve Expense: POST /api/expenses/{expenseId}/approve&quot;);</span>
+<span class="nc" id="L208">        System.out.println(&quot;   Deny Expense: POST /api/expenses/{expenseId}/deny&quot;);</span>
+<span class="nc" id="L209">        System.out.println(&quot;   CSV Reports: GET /api/reports/expenses/csv&quot;);</span>
+<span class="nc" id="L210">        System.out.println(&quot;   More reports available at /api/reports/expenses/...&quot;);</span>
+<span class="nc" id="L211">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

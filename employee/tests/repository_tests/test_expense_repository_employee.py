@@ -1,4 +1,6 @@
 import sqlite3
+from unittest.mock import Mock
+
 import pytest
 from repository.expense_repository import ExpenseRepository
 from repository.expense_model import Expense
@@ -9,9 +11,11 @@ from repository.database import DatabaseConnection
 def repo():
     db = DatabaseConnection(":memory:")
     conn = db.get_connection()
+    # This is required because the repository accesses columns by name
+    conn.row_factory = sqlite3.Row
 
     conn.execute("""
-        CREATE TABLE expenses (
+        CREATE TABLE IF NOT EXISTS expenses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             amount REAL,
@@ -27,6 +31,10 @@ def repo():
         )
     """)
     conn.commit()
+    
+    # Mock get_connection to return our already initialized connection
+    db.get_connection = Mock(return_value=conn)
+    
     return ExpenseRepository(db)
 
 

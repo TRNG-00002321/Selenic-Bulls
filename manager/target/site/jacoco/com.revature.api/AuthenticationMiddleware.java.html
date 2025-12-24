@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthenticationMiddleware.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">manager</a> &gt; <a href="index.source.html" class="el_package">com.revature.api</a> &gt; <span class="el_source">AuthenticationMiddleware.java</span></div><h1>AuthenticationMiddleware.java</h1><pre class="source lang-java linenums">package com.revature.api;
+
+import com.revature.repository.User;
+import com.revature.service.AuthenticationService;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.ForbiddenResponse;
+
+import java.util.Optional;
+
+/**
+ * Authentication middleware for validating manager access.
+ * Ensures only authenticated managers can access protected endpoints.
+ */
+public class AuthenticationMiddleware {
+    private final AuthenticationService authenticationService;
+    
+<span class="fc" id="L19">    public AuthenticationMiddleware(AuthenticationService authenticationService) {</span>
+<span class="fc" id="L20">        this.authenticationService = authenticationService;</span>
+<span class="fc" id="L21">    }</span>
+    
+    /**
+     * Handler to validate manager authentication before processing requests.
+     * Uses JWT tokens from HTTP-only cookies.
+     * @return Javalin Handler for authentication middleware
+     */
+    public Handler validateManager() {
+<span class="fc" id="L29">        return ctx -&gt; {</span>
+<span class="fc" id="L30">            String jwtToken = ctx.cookie(&quot;jwt&quot;);</span>
+            
+<span class="fc" id="L32">            Optional&lt;User&gt; managerOpt = authenticationService.validateManagerAuthentication(jwtToken);</span>
+            
+<span class="fc bfc" id="L34" title="All 2 branches covered.">            if (managerOpt.isEmpty()) {</span>
+                // Check if user is authenticated but not a manager
+<span class="fc" id="L36">                Optional&lt;User&gt; userOpt = authenticationService.validateJwtToken(jwtToken);</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">                if (userOpt.isPresent()) {</span>
+<span class="fc" id="L38">                    throw new ForbiddenResponse(&quot;Access denied - managers only&quot;);</span>
+                } else {
+<span class="fc" id="L40">                    throw new UnauthorizedResponse(&quot;Authentication required&quot;);</span>
+                }
+            }
+            
+            // Store the authenticated manager in the context for use in handlers
+<span class="fc" id="L45">            ctx.attribute(&quot;manager&quot;, managerOpt.get());</span>
+<span class="fc" id="L46">        };</span>
+    }
+    
+    /**
+     * Get the authenticated manager from the context.
+     * @param ctx Javalin context
+     * @return the authenticated manager user
+     */
+    public static User getAuthenticatedManager(Context ctx) {
+<span class="fc" id="L55">        return ctx.attribute(&quot;manager&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

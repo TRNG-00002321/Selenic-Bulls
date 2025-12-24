@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExpenseWithUser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">manager</a> &gt; <a href="index.source.html" class="el_package">com.revature.repository</a> &gt; <span class="el_source">ExpenseWithUser.java</span></div><h1>ExpenseWithUser.java</h1><pre class="source lang-java linenums">package com.revature.repository;
+
+/**
+ * ExpenseWithUser model representing an expense with associated user information.
+ * Used for manager views that need both expense and employee details.
+ */
+public class ExpenseWithUser {
+    private Expense expense;
+    private User user;
+    private Approval approval;
+    
+<span class="nc" id="L12">    public ExpenseWithUser() {}</span>
+    
+<span class="nc" id="L14">    public ExpenseWithUser(Expense expense, User user, Approval approval) {</span>
+<span class="nc" id="L15">        this.expense = expense;</span>
+<span class="nc" id="L16">        this.user = user;</span>
+<span class="nc" id="L17">        this.approval = approval;</span>
+<span class="nc" id="L18">    }</span>
+    
+    // Getters and setters
+    public Expense getExpense() {
+<span class="nc" id="L22">        return expense;</span>
+    }
+    
+    public void setExpense(Expense expense) {
+<span class="nc" id="L26">        this.expense = expense;</span>
+<span class="nc" id="L27">    }</span>
+    
+    public User getUser() {
+<span class="nc" id="L30">        return user;</span>
+    }
+    
+    public void setUser(User user) {
+<span class="nc" id="L34">        this.user = user;</span>
+<span class="nc" id="L35">    }</span>
+    
+    public Approval getApproval() {
+<span class="nc" id="L38">        return approval;</span>
+    }
+    
+    public void setApproval(Approval approval) {
+<span class="nc" id="L42">        this.approval = approval;</span>
+<span class="nc" id="L43">    }</span>
+    
+    @Override
+    public String toString() {
+<span class="nc" id="L47">        return &quot;ExpenseWithUser{&quot; +</span>
+                &quot;expense=&quot; + expense +
+                &quot;, user=&quot; + user +
+                &quot;, approval=&quot; + approval +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

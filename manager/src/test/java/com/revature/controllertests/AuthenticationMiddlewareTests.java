@@ -59,4 +59,27 @@ class AuthenticationMiddlewareTests {
         assertDoesNotThrow(() -> middleware.validateManager().handle(ctx));
         verify(ctx).attribute("manager", user);
     }
+
+    @Test
+    void testGetAuthenticatedManager_ReturnsManagerFromContext() {
+        User manager = new User();
+        manager.setRole("Manager");
+
+        when(ctx.attribute("manager")).thenReturn(manager);
+
+        User result = AuthenticationMiddleware.getAuthenticatedManager(ctx);
+
+        assertSame(manager, result);
+        verify(ctx).attribute("manager");
+    }
+
+    @Test
+    void testGetAuthenticatedManager_ReturnsNullWhenNotSet() {
+        when(ctx.attribute("manager")).thenReturn(null);
+
+        User result = AuthenticationMiddleware.getAuthenticatedManager(ctx);
+
+        assertNull(result);
+        verify(ctx).attribute("manager");
+    }
 }
