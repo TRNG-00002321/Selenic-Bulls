@@ -1,4 +1,10 @@
 .venv/
 myenv/
 DatabaseConnection.java
-*.json
+target/
+.pytest_cache/
+/allure-results/
+/allure-report/
+**/.DS_Store
+htmlcov/
+__pycache__/
