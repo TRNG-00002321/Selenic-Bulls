@@ -7,3 +7,4 @@ target/
 /allure-report/
 **/.DS_Store
 htmlcov/
+__pycache__/
