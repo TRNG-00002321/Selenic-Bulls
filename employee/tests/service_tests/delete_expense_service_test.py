@@ -92,7 +92,7 @@ class TestDeleteExpenseService:
         # Verify the result matches expected outcome
         assert result == expected_result
         
-        # Mocking: verify the behavior of the repositories (times called with correct params)
+        # Mocking: verify the behavior of the repositories (times called with correct parameters)
         # The service layer checks for expense existence first and calls this particular repository method.
         mock_expense_repository.find_by_id.assert_called_once_with(expense_id)
         # The service layer then checks the approval status by calling this method.
