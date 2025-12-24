@@ -1,1 +1,0 @@
-Returned 0 pending expenses for scenario: Edge Case: No Pending Expenses

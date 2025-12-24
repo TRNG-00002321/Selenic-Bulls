@@ -1,1 +1,0 @@
-Should throw RuntimeException when database connection fails

@@ -1,1 +1,0 @@
-JSON response contains 0 pending expenses with success=true for scenario: Edge Case: No Pending Expenses

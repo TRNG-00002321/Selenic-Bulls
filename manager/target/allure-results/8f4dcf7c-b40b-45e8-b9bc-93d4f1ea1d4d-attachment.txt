@@ -1,1 +1,0 @@
-Should throw InternalServerErrorResponse when service layer fails

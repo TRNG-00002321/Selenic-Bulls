@@ -1,1 +1,0 @@
-Should return successful JSON response with single pending expense

@@ -1,1 +1,0 @@
-Should return all pending expenses when repository contains multiple pending expenses
