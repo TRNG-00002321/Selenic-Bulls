@@ -5,121 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="23e0dc6d-2de3-45f7-a8e6-26576ad559f8" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/target/classes/auth.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/Main.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/api/AuthenticationMiddleware.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/api/ExpenseController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/api/ReportController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/Approval.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/ApprovalRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/DatabaseConnection.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/Expense.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/ExpenseRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/ExpenseWithUser.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/User.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/repository/UserRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/service/AuthenticationService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/revature/service/ExpenseService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/login.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/manager.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/manager.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/jacoco.exec" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/AuthenticationMiddleware.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/AuthenticationMiddleware.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/ExpenseController.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/ExpenseController.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/ReportController.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/ReportController.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.api/index.source.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/Approval.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/Approval.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ApprovalRepository.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ApprovalRepository.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/DatabaseConnection.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/DatabaseConnection.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/Expense.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/Expense.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ExpenseRepository.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ExpenseRepository.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ExpenseWithUser.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/ExpenseWithUser.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/User.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/User.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/UserRepository.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/UserRepository.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.repository/index.source.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/AuthenticationService.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/AuthenticationService.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/ExpenseService.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/ExpenseService.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature.service/index.source.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature/Main.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature/Main.java.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/com.revature/index.source.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/branchfc.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/branchnc.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/branchpc.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/bundle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/class.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/down.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/greenbar.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/group.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/method.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/package.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/prettify.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/prettify.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/redbar.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/report.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/report.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/session.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/sort.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/sort.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/source.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-resources/up.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco-sessions.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/site/jacoco/jacoco.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.controllertests.AuthenticationMiddlewareTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.repotests.UserRepoTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$JwtTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$LegacyHeaderAuthTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$LoginTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$ManagerAuthTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$RoleTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests$UserLookupTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-com.revature.servicetests.AuthenticationServiceTests.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.controllertests.AuthenticationMiddlewareTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.repotests.UserRepoTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$JwtTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$LegacyHeaderAuthTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$LoginTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$ManagerAuthTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$RoleTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests$UserLookupTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/surefire-reports/com.revature.servicetests.AuthenticationServiceTests.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/allure.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/ManagerTestSuite.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/AuthenticationMiddlewareTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/controllertests/GetPendingExpenseControllerTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/GetPendingExpenseRepoTest.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/repotests/UserRepoTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$JwtTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$LegacyHeaderAuthTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$LoginTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$ManagerAuthTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$RoleTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests$UserLookupTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/AuthenticationServiceTests.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/test-classes/com/revature/servicetests/GetPendingExpenseServiceTest.class" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/PlaywrightDemo/src/test/java/com/revature/pw/BaseTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/PlaywrightDemo/src/test/java/com/revature/pw/LoginTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/PlaywrightDemo/src/test/java/com/revature/pw/TestPW01_Demo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../StephRepo/PlaywrightDemo/src/test/java/com/revature/pw/TestPW02_Interactions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -220,9 +110,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Main" />
         <item itemvalue="JUnit.AuthenticationServiceTests.testValidateJwtToken_NullOrBlank" />
         <item itemvalue="JUnit.AuthenticationServiceTests.testIsManager" />
-        <item itemvalue="Application.Main" />
       </list>
     </recent_temporary>
   </component>
