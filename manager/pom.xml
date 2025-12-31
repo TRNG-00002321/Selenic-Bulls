@@ -189,6 +189,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
                 <configuration>
+                    <parallel>none</parallel>
+                    <reuseForks>false</reuseForks>
                     <testFailureIgnore>false</testFailureIgnore>
                     <argLine>
                         ${argLine}

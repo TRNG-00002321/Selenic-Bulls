@@ -135,7 +135,6 @@ public class GetPendingExpenseRepoTest {
     @DisplayName("Test findPendingExpensesWithUsers with various database scenarios")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Tests the findPendingExpensesWithUsers method of ExpenseRepository with different database scenarios including happy path, sad path, edge cases, and boundary conditions")
-    @Issue("EXPENSE-REPO-TEST-001")
     void testFindPendingExpensesWithUsers(String scenario, int expectedCount, 
                                          boolean shouldThrowException, String description) throws SQLException {
         // Log scenario details to Allure (will be different for each parameterized run)

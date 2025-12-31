@@ -29,8 +29,8 @@ public class GetAllExpensesAPITest {
     private static RequestSpecification authRequestSpec;
     private static ResponseSpecification successResponseSpec;
 
-    @BeforeAll
-    static void setup() {
+    @BeforeEach
+    void setup() {
         //Default Base URI for RESTAssured is http://localhost so it doesnt need to be defined
 
         //Default Port for RESTAssured is 8080 so we need to set it to 5001
@@ -72,8 +72,8 @@ public class GetAllExpensesAPITest {
                 .build();
     }
      
-    @AfterAll
-    static void tearDown() {
+    @AfterEach
+    void tearDown() {
         // Logout to clean up session
         given()
             .spec(authRequestSpec)
@@ -89,7 +89,6 @@ public class GetAllExpensesAPITest {
     @DisplayName("Happy Path: Successfully retrieve all expenses")
     @Description("Verify that authenticated managers can successfully retrieve all expenses regardless of status")
     @Severity(SeverityLevel.CRITICAL)
-    @Issue("EXPENSE-API-TEST-006")
     void testGetAllExpensesSuccess() {
         given()
             .spec(authRequestSpec)
@@ -110,9 +109,8 @@ public class GetAllExpensesAPITest {
     @DisplayName("Sad Path: Unauthorized access without authentication token")
     @Description("Verify that requests without authentication tokens are properly rejected. NOTE: This endpoint currently has a security vulnerability bug")
     @Severity(SeverityLevel.BLOCKER)
-    @Issue("EXPENSE-API-TEST-007")
     void testGetAllExpensesUnauthorized() {
-        // There is a bug in the project.
+        // There is a bug in the  project.
         // This endpoint is currently publicly accessible and does not 
         // require authentication, even though it should. Users can successfully 
         // call it without being logged in, meaning authorization checks are not enforced. 
@@ -133,7 +131,6 @@ public class GetAllExpensesAPITest {
     @DisplayName("Sad Path: Invalid authentication token")
     @Description("Verify that requests with invalid authentication tokens are properly rejected. NOTE: This endpoint currently has a security vulnerability bug")
     @Severity(SeverityLevel.BLOCKER)
-    @Issue("EXPENSE-API-TEST-008")
     void testGetAllExpensesInvalidAuthToken() {
         // There is a bug in the project.
         // This endpoint is currently publicly accessible and does not 
@@ -157,7 +154,6 @@ public class GetAllExpensesAPITest {
     @DisplayName("Edge Case: Full response structure validation")
     @Description("Verify that the API response contains all required fields with correct data types")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-009")
     void testGetAllExpensesResponseStructure() {
         given()
             .spec(authRequestSpec)
@@ -178,7 +174,6 @@ public class GetAllExpensesAPITest {
     @DisplayName("Edge Case: Wrong HTTP method validation")
     @Description("Verify that incorrect HTTP methods are properly rejected with appropriate error codes")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-010")
     void testGetAllExpensesWrongHttpMethod() {
         given()
             .spec(authRequestSpec)
@@ -194,7 +189,6 @@ public class GetAllExpensesAPITest {
     @DisplayName("Boundary Test: Empty expenses database")
     @Description("Verify that the API handles empty expenses database gracefully")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-011")
     @Flaky
     void testGetAllExpensesEmptyDatabase() {
         // The response should still be successful even when there are no pending expenses

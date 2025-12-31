@@ -131,7 +131,6 @@ public class GetPendingExpenseServiceTest {
     @DisplayName("Test getPendingExpenses with various scenarios")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Tests the getPendingExpenses method of ExpenseService with different data scenarios including happy path, sad path, edge cases, and boundary conditions")
-    @Issue("EXPENSE-SERVICE-TEST-001")
     void testGetPendingExpenses(String scenario, List<ExpenseWithUser> mockReturnData, 
                                boolean shouldThrowException, int expectedSize, String description) {
         // Log scenario details to Allure (will be different for each parameterized run)

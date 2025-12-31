@@ -29,8 +29,8 @@ public class GetPendingExpensesAPITest {
     private static RequestSpecification authRequestSpec;
     private static ResponseSpecification successResponseSpec;
 
-    @BeforeAll
-    static void setup() {
+    @BeforeEach
+    void setup() {
         //Default Base URI for RESTAssured is http://localhost so it doesnt need to be defined
         
         //Default Port for RESTAssured is 8080 so we need to set it to 5001
@@ -72,8 +72,8 @@ public class GetPendingExpensesAPITest {
                 .build();
     }
      
-    @AfterAll
-    static void tearDown() {
+    @AfterEach
+    void tearDown() {
         // Logout to clean up session
         given()
             .spec(authRequestSpec)
@@ -89,7 +89,6 @@ public class GetPendingExpensesAPITest {
     @DisplayName("Happy Path: Successfully retrieve pending expenses")
     @Description("Verify that authenticated managers can successfully retrieve all pending expenses with proper response structure")
     @Severity(SeverityLevel.CRITICAL)
-    @Issue("EXPENSE-API-TEST-001")
     void testGetPendingExpensesSuccess() {
         given()
             .spec(authRequestSpec)
@@ -110,7 +109,6 @@ public class GetPendingExpensesAPITest {
     @DisplayName("Sad Path: Unauthorized access without authentication token")
     @Description("Verify that requests without authentication tokens are properly rejected with appropriate error messages")
     @Severity(SeverityLevel.CRITICAL)
-    @Issue("EXPENSE-API-TEST-002")
     void testGetPendingExpensesUnauthorized() {
         // Sending the request without the cookie that contains the JWT token
         // Since the endpoint is protected, it should return 401 Unauthorized or 403 Forbidden
@@ -128,7 +126,6 @@ public class GetPendingExpensesAPITest {
     @DisplayName("Sad Path: Invalid authentication token")
     @Description("Verify that requests with invalid or expired authentication tokens are properly rejected")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-003")
     void testGetPendingExpensesInvalidAuthToken() {
         // Sending the request with an invalid/expired cookie
         // Since the endpoint is protected, it should return 401 Unauthorized or 403 Forbidden
@@ -148,7 +145,6 @@ public class GetPendingExpensesAPITest {
     @DisplayName("Edge Case: Full response structure validation")
     @Description("Verify that the API response contains all required fields with correct data types")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-004")
     void testGetPendingExpensesResponseStructure() {
         given()
             .spec(authRequestSpec)
@@ -169,7 +165,6 @@ public class GetPendingExpensesAPITest {
     @DisplayName("Boundary Test: Empty pending expenses database")
     @Description("Verify that the API handles empty pending expenses gracefully with appropriate response structure")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-005")
     @Flaky
     void testGetPendingExpensesEmptyDatabase() {
         // The response should still be successful even when there are no pending expenses

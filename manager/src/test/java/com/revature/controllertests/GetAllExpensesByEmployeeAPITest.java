@@ -36,8 +36,8 @@ public class GetAllExpensesByEmployeeAPITest {
     private static final int ZERO_EMPLOYEE_ID = 0;
     private static final int MAX_INTEGER_ID = Integer.MAX_VALUE;
 
-    @BeforeAll
-    static void setup() {
+    @BeforeEach
+    void setup() {
         //Default Base URI for RESTAssured is http://localhost so it doesnt need to be defined
 
         //Default Port for RESTAssured is 8080 so we need to set it to 5001
@@ -79,8 +79,8 @@ public class GetAllExpensesByEmployeeAPITest {
                 .build();
     }
      
-    @AfterAll
-    static void tearDown() {
+    @AfterEach
+    void tearDown() {
         // Logout to clean up session
         given()
             .spec(authRequestSpec)
@@ -96,7 +96,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Happy Path: Successfully retrieve expenses for valid employee")
     @Description("Verify that authenticated managers can successfully retrieve all expenses for a specific employee ID")
     @Severity(SeverityLevel.CRITICAL)
-    @Issue("EXPENSE-API-TEST-012")
     void testGetExpensesByEmployeeSuccess() {
         given()
             .spec(authRequestSpec)
@@ -118,7 +117,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Sad Path: Unauthorized access without authentication token")
     @Description("Verify that requests without authentication tokens are properly rejected with appropriate error messages")
     @Severity(SeverityLevel.CRITICAL)
-    @Issue("EXPENSE-API-TEST-013")
     void testGetExpensesByEmployeeUnauthorized() {
         given()
             .spec(unAuthRequestSpec)
@@ -134,7 +132,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Sad Path: Invalid employee ID format - non-numeric")
     @Description("Verify that non-numeric employee IDs are handled gracefully with appropriate error responses")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-014")
     void testGetExpensesByEmployeeInvalidIdFormat() {
         given()
             .spec(authRequestSpec)
@@ -150,7 +147,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Sad Path: Non-existent employee ID")
     @Description("Verify that requests for non-existent employee IDs return empty results rather than errors")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-015")
     void testGetExpensesByEmployeeNonExistentEmployee() {
         given()
             .spec(authRequestSpec)
@@ -170,7 +166,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Sad Test: Invalid session token")
     @Description("Verify that requests with invalid session tokens are properly rejected")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-016")
     void testGetExpensesByEmployeeInvalidSession() {
         given()
             .spec(unAuthRequestSpec)
@@ -187,7 +182,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Edge Case: Negative employee ID")
     @Description("Verify that negative employee IDs are handled appropriately by the API")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-017")
     void testGetExpensesByEmployeeNegativeId() {
         given()
             .spec(authRequestSpec)
@@ -207,7 +201,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Edge Case: Zero employee ID")
     @Description("Verify that zero employee ID is handled appropriately by the API")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-018")
     void testGetExpensesByEmployeeZeroId() {
         given()
             .spec(authRequestSpec)
@@ -227,7 +220,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Edge Case: Special characters in employee ID path")
     @Description("Verify that special characters in employee ID path are handled gracefully")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-019")
     void testGetExpensesByEmployeeSpecialCharacters() {
         given()
             .spec(authRequestSpec)
@@ -243,7 +235,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Edge Case: Full response structure validation")
     @Description("Verify that the API response contains all required fields with correct data types")
     @Severity(SeverityLevel.NORMAL)
-    @Issue("EXPENSE-API-TEST-020")
     void testGetExpensesByEmployeeResponseStructure() {
         given()
             .spec(authRequestSpec)
@@ -266,7 +257,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Boundary Test: Maximum integer employee ID")
     @Description("Verify that the API can handle maximum integer values for employee ID")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-021")
     void testGetExpensesByEmployeeMaxIntegerId() {
         given()
             .spec(authRequestSpec)
@@ -285,7 +275,6 @@ public class GetAllExpensesByEmployeeAPITest {
     @DisplayName("Boundary Test: Empty employee expenses list")
     @Description("Verify that the API handles empty expense lists for employees gracefully")
     @Severity(SeverityLevel.MINOR)
-    @Issue("EXPENSE-API-TEST-022")
     @Flaky
     void testGetExpensesByEmployeeEmptyExpensesList() {
         //This test is expected to fail until the database is cleared of all expenses for the employee
