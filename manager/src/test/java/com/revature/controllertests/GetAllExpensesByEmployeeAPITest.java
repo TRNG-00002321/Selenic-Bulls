@@ -97,6 +97,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that authenticated managers can successfully retrieve all expenses for a specific employee ID")
     @Severity(SeverityLevel.CRITICAL)
     void testGetExpensesByEmployeeSuccess() {
+        Allure.step("Arrange: Prepare authenticated request for employee expenses endpoint with valid employee ID: " + VALID_EMPLOYEE_ID);
+        Allure.addAttachment("Test Scenario", "Happy Path - Successfully retrieve expenses for valid employee");
+        Allure.addAttachment("Employee ID", String.valueOf(VALID_EMPLOYEE_ID));
+        
+        Allure.step("Act: Send authenticated GET request to /api/expenses/employee/" + VALID_EMPLOYEE_ID);
         given()
             .spec(authRequestSpec)
         .when()
@@ -111,6 +116,8 @@ public class GetAllExpensesByEmployeeAPITest {
             // Fix the count to be equal to the size of the data list instead of hardcoded value
             .body("count", equalTo(3))
             .body("employeeId", equalTo(VALID_EMPLOYEE_ID));
+        
+        Allure.step("Assert: Validated successful response with employee-specific expenses data");
     }
     
     @Test
@@ -118,6 +125,10 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that requests without authentication tokens are properly rejected with appropriate error messages")
     @Severity(SeverityLevel.CRITICAL)
     void testGetExpensesByEmployeeUnauthorized() {
+        Allure.step("Arrange: Prepare unauthenticated request for employee expenses endpoint");
+        Allure.addAttachment("Test Scenario", "Sad Path - Unauthorized access without authentication token");
+        
+        Allure.step("Act: Send unauthenticated GET request to /api/expenses/employee/" + VALID_EMPLOYEE_ID);
         given()
             .spec(unAuthRequestSpec)
         .when()
@@ -126,6 +137,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .statusCode(anyOf(equalTo(401), equalTo(403)))
             .time(lessThan(10000L))
             .body("title", containsString("Authentication required"));
+        
+        Allure.step("Assert: Validated unauthorized access rejection with proper error message");
     }
     
     @Test
@@ -133,6 +146,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that non-numeric employee IDs are handled gracefully with appropriate error responses")
     @Severity(SeverityLevel.NORMAL)
     void testGetExpensesByEmployeeInvalidIdFormat() {
+        Allure.step("Arrange: Prepare authenticated request with non-numeric employee ID");
+        Allure.addAttachment("Test Scenario", "Sad Path - Invalid employee ID format (non-numeric)");
+        Allure.addAttachment("Invalid Employee ID", "invalid_id");
+        
+        Allure.step("Act: Send authenticated GET request with non-numeric employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -141,6 +159,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .statusCode(500)
             .time(lessThan(10000L))
             .body("title", containsString("Failed to retrieve expenses for employee"));
+        
+        Allure.step("Assert: Validated proper error handling for non-numeric employee ID");
     }
     
     @Test
@@ -148,6 +168,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that requests for non-existent employee IDs return empty results rather than errors")
     @Severity(SeverityLevel.NORMAL)
     void testGetExpensesByEmployeeNonExistentEmployee() {
+        Allure.step("Arrange: Prepare authenticated request with non-existent employee ID: " + NON_EXISTENT_EMPLOYEE_ID);
+        Allure.addAttachment("Test Scenario", "Sad Path - Non-existent employee ID");
+        Allure.addAttachment("Non-existent Employee ID", String.valueOf(NON_EXISTENT_EMPLOYEE_ID));
+        
+        Allure.step("Act: Send authenticated GET request with non-existent employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -160,6 +185,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("data", isA(List.class))
             .body("count", equalTo(0))
             .body("employeeId", equalTo(NON_EXISTENT_EMPLOYEE_ID));
+        
+        Allure.step("Assert: Validated empty results for non-existent employee ID");
     }
 
     @Test
@@ -167,6 +194,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that requests with invalid session tokens are properly rejected")
     @Severity(SeverityLevel.NORMAL)
     void testGetExpensesByEmployeeInvalidSession() {
+        Allure.step("Arrange: Prepare request with invalid session token");
+        Allure.addAttachment("Test Scenario", "Sad Path - Invalid session token");
+        Allure.addAttachment("Invalid Token", "invalid_session_12345");
+        
+        Allure.step("Act: Send request with invalid session token");
         given()
             .spec(unAuthRequestSpec)
             .cookie("jwt", "invalid_session_12345")
@@ -176,6 +208,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .statusCode(anyOf(equalTo(401), equalTo(403)))
             .time(lessThan(10000L))
             .body("title", containsString("Authentication required"));
+        
+        Allure.step("Assert: Validated rejection of invalid session token");
     }
     
     @Test
@@ -183,6 +217,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that negative employee IDs are handled appropriately by the API")
     @Severity(SeverityLevel.MINOR)
     void testGetExpensesByEmployeeNegativeId() {
+        Allure.step("Arrange: Prepare authenticated request with negative employee ID: " + NEGATIVE_EMPLOYEE_ID);
+        Allure.addAttachment("Test Scenario", "Edge Case - Negative employee ID");
+        Allure.addAttachment("Negative Employee ID", String.valueOf(NEGATIVE_EMPLOYEE_ID));
+        
+        Allure.step("Act: Send authenticated GET request with negative employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -195,6 +234,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("data", isA(List.class))
             .body("count", equalTo(0))
             .body("employeeId", equalTo(NEGATIVE_EMPLOYEE_ID));
+        
+        Allure.step("Assert: Validated handling of negative employee ID");
     }
     
     @Test
@@ -202,6 +243,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that zero employee ID is handled appropriately by the API")
     @Severity(SeverityLevel.MINOR)
     void testGetExpensesByEmployeeZeroId() {
+        Allure.step("Arrange: Prepare authenticated request with zero employee ID: " + ZERO_EMPLOYEE_ID);
+        Allure.addAttachment("Test Scenario", "Edge Case - Zero employee ID");
+        Allure.addAttachment("Zero Employee ID", String.valueOf(ZERO_EMPLOYEE_ID));
+        
+        Allure.step("Act: Send authenticated GET request with zero employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -214,6 +260,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("data", isA(List.class))
             .body("count", equalTo(0))
             .body("employeeId", equalTo(ZERO_EMPLOYEE_ID));
+        
+        Allure.step("Assert: Validated handling of zero employee ID");
     }
 
     @Test
@@ -221,6 +269,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that special characters in employee ID path are handled gracefully")
     @Severity(SeverityLevel.MINOR)
     void testGetExpensesByEmployeeSpecialCharacters() {
+        Allure.step("Arrange: Prepare authenticated request with special characters in employee ID path");
+        Allure.addAttachment("Test Scenario", "Edge Case - Special characters in employee ID path");
+        Allure.addAttachment("Special Character ID", "1@#$");
+        
+        Allure.step("Act: Send authenticated GET request with special characters in employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -229,6 +282,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .statusCode(500)
             .time(lessThan(10000L))
             .body("title", containsString("Failed to retrieve expenses for employee"));
+        
+        Allure.step("Assert: Validated proper error handling for special characters in employee ID");
     }
 
     @Test
@@ -236,6 +291,10 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that the API response contains all required fields with correct data types")
     @Severity(SeverityLevel.NORMAL)
     void testGetExpensesByEmployeeResponseStructure() {
+        Allure.step("Arrange: Prepare authenticated request for response structure validation");
+        Allure.addAttachment("Test Scenario", "Edge Case - Full response structure validation");
+        
+        Allure.step("Act: Send authenticated GET request to validate response structure");
         given()
             .spec(authRequestSpec)
         .when()
@@ -251,6 +310,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("count", isA(Integer.class))
             .body("employeeId", notNullValue())
             .body("employeeId", isA(Integer.class));
+        
+        Allure.step("Assert: Validated all required fields present with correct data types");
     }
     
     @Test
@@ -258,6 +319,11 @@ public class GetAllExpensesByEmployeeAPITest {
     @Description("Verify that the API can handle maximum integer values for employee ID")
     @Severity(SeverityLevel.MINOR)
     void testGetExpensesByEmployeeMaxIntegerId() {
+        Allure.step("Arrange: Prepare authenticated request with maximum integer employee ID: " + MAX_INTEGER_ID);
+        Allure.addAttachment("Test Scenario", "Boundary Test - Maximum integer employee ID");
+        Allure.addAttachment("Max Integer ID", String.valueOf(MAX_INTEGER_ID));
+        
+        Allure.step("Act: Send authenticated GET request with maximum integer employee ID");
         given()
             .spec(authRequestSpec)
         .when()
@@ -269,6 +335,8 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("data", notNullValue())
             .body("count", greaterThanOrEqualTo(0))
             .body("employeeId", equalTo(MAX_INTEGER_ID));
+        
+        Allure.step("Assert: Validated handling of maximum integer employee ID");
     }
      
     @Test
@@ -277,7 +345,12 @@ public class GetAllExpensesByEmployeeAPITest {
     @Severity(SeverityLevel.MINOR)
     @Flaky
     void testGetExpensesByEmployeeEmptyExpensesList() {
+        Allure.step("Arrange: Prepare authenticated request for empty employee expenses scenario");
+        Allure.addAttachment("Test Scenario", "Boundary Test - Empty employee expenses list");
+        Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of expenses for employee ID: " + VALID_EMPLOYEE_ID);
+        
         //This test is expected to fail until the database is cleared of all expenses for the employee
+        Allure.step("Act: Send authenticated GET request expecting empty employee expenses list");
         given()
             .spec(authRequestSpec)
         .when()
@@ -290,5 +363,7 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("data", hasSize(0))
             .body("count", equalTo(0))
             .body("employeeId", equalTo(VALID_EMPLOYEE_ID));
+        
+        Allure.step("Assert: Validated graceful handling of empty employee expenses list");
     }
 }

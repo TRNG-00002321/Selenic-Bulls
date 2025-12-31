@@ -90,6 +90,10 @@ public class GetPendingExpensesAPITest {
     @Description("Verify that authenticated managers can successfully retrieve all pending expenses with proper response structure")
     @Severity(SeverityLevel.CRITICAL)
     void testGetPendingExpensesSuccess() {
+        Allure.step("Arrange: Prepare authenticated request for pending expenses endpoint");
+        Allure.addAttachment("Test Scenario", "Happy Path - Successfully retrieve pending expenses");
+        
+        Allure.step("Act: Send authenticated GET request to /api/expenses/pending");
         given()
             .spec(authRequestSpec)
         .when()
@@ -103,6 +107,8 @@ public class GetPendingExpensesAPITest {
             .body("count", greaterThanOrEqualTo(0))
             //Fix the count to be equal to the size of the data list instead of hardcoded value
             .body("count", equalTo(1));
+        
+        Allure.step("Assert: Validated successful response with proper data structure");
     }
     
     @Test
@@ -110,8 +116,12 @@ public class GetPendingExpensesAPITest {
     @Description("Verify that requests without authentication tokens are properly rejected with appropriate error messages")
     @Severity(SeverityLevel.CRITICAL)
     void testGetPendingExpensesUnauthorized() {
+        Allure.step("Arrange: Prepare unauthenticated request (no JWT token)");
+        Allure.addAttachment("Test Scenario", "Sad Path - Unauthorized access without authentication token");
+        
         // Sending the request without the cookie that contains the JWT token
         // Since the endpoint is protected, it should return 401 Unauthorized or 403 Forbidden
+        Allure.step("Act: Send unauthenticated GET request to /api/expenses/pending");
         given()
             .spec(unAuthRequestSpec)
         .when()
@@ -120,6 +130,8 @@ public class GetPendingExpensesAPITest {
             .statusCode(anyOf(equalTo(401), equalTo(403)))
             .time(lessThan(10000L))
             .body("title", containsString("Authentication required"));
+        
+        Allure.step("Assert: Validated unauthorized access rejection with proper error message");
     }
     
     @Test
@@ -127,8 +139,12 @@ public class GetPendingExpensesAPITest {
     @Description("Verify that requests with invalid or expired authentication tokens are properly rejected")
     @Severity(SeverityLevel.NORMAL)
     void testGetPendingExpensesInvalidAuthToken() {
+        Allure.step("Arrange: Prepare request with invalid JWT token");
+        Allure.addAttachment("Test Scenario", "Sad Path - Invalid authentication token");
+        
         // Sending the request with an invalid/expired cookie
         // Since the endpoint is protected, it should return 401 Unauthorized or 403 Forbidden
+        Allure.step("Act: Send request with invalid JWT token to /api/expenses/pending");
         given()
             .spec(unAuthRequestSpec)
             .cookie("jwt", "expired_or_invalid_session_token")
@@ -138,7 +154,8 @@ public class GetPendingExpensesAPITest {
             .statusCode(anyOf(equalTo(401), equalTo(403)))
             .time(lessThan(10000L))
             .body("title", containsString("Authentication required"));
-
+        
+        Allure.step("Assert: Validated invalid token rejection with proper error message");
     }
     
     @Test
@@ -146,6 +163,10 @@ public class GetPendingExpensesAPITest {
     @Description("Verify that the API response contains all required fields with correct data types")
     @Severity(SeverityLevel.NORMAL)
     void testGetPendingExpensesResponseStructure() {
+        Allure.step("Arrange: Prepare authenticated request for response structure validation");
+        Allure.addAttachment("Test Scenario", "Edge Case - Full response structure validation");
+        
+        Allure.step("Act: Send authenticated GET request to validate response structure");
         given()
             .spec(authRequestSpec)
         .when()
@@ -159,6 +180,8 @@ public class GetPendingExpensesAPITest {
             .body("data", isA(List.class))
             .body("count", notNullValue())
             .body("count", isA(Integer.class));
+        
+        Allure.step("Assert: Validated all required fields present with correct data types");
     }
 
     @Test
@@ -167,9 +190,14 @@ public class GetPendingExpensesAPITest {
     @Severity(SeverityLevel.MINOR)
     @Flaky
     void testGetPendingExpensesEmptyDatabase() {
+        Allure.step("Arrange: Prepare authenticated request for empty database scenario");
+        Allure.addAttachment("Test Scenario", "Boundary Test - Empty pending expenses database");
+        Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of pending expenses");
+        
         // The response should still be successful even when there are no pending expenses
         // It should return an empty data list (not null) with the count as 0
         // This test is expected to fail until the database is cleared of all pending expenses
+        Allure.step("Act: Send authenticated GET request expecting empty results");
         given()
             .spec(authRequestSpec)
         .when()
@@ -180,5 +208,7 @@ public class GetPendingExpensesAPITest {
             .body("success", equalTo(true))
             .body("data", notNullValue())
             .body("count", equalTo(0));
+        
+        Allure.step("Assert: Validated graceful handling of empty pending expenses");
     }
 }
