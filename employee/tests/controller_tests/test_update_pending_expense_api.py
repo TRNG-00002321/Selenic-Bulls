@@ -4,6 +4,7 @@ Tests cover happy path, sad path, edge cases, and boundary conditions.
 """
 import pytest
 import requests
+import allure
 from datetime import date
 import time
 
@@ -88,9 +89,15 @@ def pending_expense_for_unauthenticated(session, base_url):
 
 
 
+@allure.epic("Expense Management System")
+@allure.feature("Expense Updates - API Integration")
+@allure.story("As an employee, I want to edit expenses that are still pending so that I can correct mistakes before they are reviewed")
 class TestUpdateExpenseHappyPath:
     """Test successful expense update scenarios."""
     
+    @allure.title("Successfully update pending expense with all fields")
+    @allure.description("Test successful update of a pending expense with all fields via API")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_pending_expense_all_fields(self, authenticated_session, base_url, pending_expense):
         """Test successful update of a pending expense with all fields."""
         update_data = {
@@ -119,6 +126,9 @@ class TestUpdateExpenseHappyPath:
         assert expense_data['description'] == 'Updated client dinner expense'
         assert expense_data['date'] == '2024-12-30'
     
+    @allure.title("Successfully update expense with precise decimal amount")
+    @allure.description("Test update with precise decimal amount handling")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_expense_with_decimal_amount(self, authenticated_session, base_url, pending_expense):
         """Test update with precise decimal amount."""
         update_data = {
@@ -138,9 +148,15 @@ class TestUpdateExpenseHappyPath:
         assert float(response_data['expense']['amount']) == 99.99
 
 
+@allure.epic("Expense Management System")
+@allure.feature("Expense Updates - API Integration")
+@allure.story("As an employee, I want to edit expenses that are still pending so that I can correct mistakes before they are reviewed")
 class TestUpdateExpenseSadPath:
     """Test error scenarios for expense updates."""
     
+    @allure.title("Fail to update non-existent expense")
+    @allure.description("Test updating an expense that doesn't exist returns proper 404 error")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_nonexistent_expense(self, authenticated_session, base_url):
         """Test updating an expense that doesn't exist."""
         update_data = {
@@ -160,6 +176,9 @@ class TestUpdateExpenseSadPath:
         assert 'error' in response_data
         assert 'not found' in response_data['error'].lower()
     
+    @allure.title("Fail to update approved expense")
+    @allure.description("Test that approved expenses cannot be updated")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_approved_expense(self, authenticated_session, base_url):
         """Test updating an expense that's already approved."""
         # Note: Approved expense is seeded in the database with ID 2
@@ -182,6 +201,9 @@ class TestUpdateExpenseSadPath:
         assert 'error' in response_data
         assert 'Cannot edit expense that has been reviewed' in response_data['error']
     
+    @allure.title("Fail to update expense without authentication")
+    @allure.description("Test that unauthenticated requests are properly rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_unauthenticated(self, session, base_url, pending_expense_for_unauthenticated):
         """Test updating expense without authentication."""
         update_data = {
@@ -201,6 +223,9 @@ class TestUpdateExpenseSadPath:
         assert 'error' in response_data
         assert 'authentication required' in response_data['error'].lower()
     
+    @allure.title("Fail to update expense with missing required fields")
+    @allure.description("Test that requests with missing required fields are rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_missing_required_fields(self, authenticated_session, base_url, pending_expense):
         """Test update with missing required fields."""
         test_cases = [
@@ -222,6 +247,9 @@ class TestUpdateExpenseSadPath:
             assert 'error' in response_data
             assert 'amount, description, and date are required' in response_data['error'].lower()
     
+    @allure.title("Fail to update expense with invalid JSON payload")
+    @allure.description("Test that invalid JSON payloads are properly handled")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_expense_invalid_json(self, authenticated_session, base_url, pending_expense):
         """Test update with invalid JSON payload."""
         response = authenticated_session.put(
@@ -236,6 +264,9 @@ class TestUpdateExpenseSadPath:
         response_data = response.json()
         assert 'error' in response_data
     
+    @allure.title("Fail to update expense with no JSON data")
+    @allure.description("Test that requests without JSON data are properly rejected")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_expense_no_json_data(self, authenticated_session, base_url, pending_expense):
         """Test update with no JSON data."""
         response = authenticated_session.put(
@@ -250,9 +281,15 @@ class TestUpdateExpenseSadPath:
         assert 'json' in response_data['details'].lower()
 
 
+@allure.epic("Expense Management System")
+@allure.feature("Expense Updates - API Integration")
+@allure.story("As an employee, I want to edit expenses that are still pending so that I can correct mistakes before they are reviewed")
 class TestUpdateExpenseEdgeCases:
     """Test edge cases for expense updates."""
     
+    @allure.title("Handle very long description in expense update")
+    @allure.description("Test update with very long description (1000 characters)")
+    @allure.severity(allure.severity_level.MINOR)
     def test_update_expense_very_long_description(self, authenticated_session, base_url, pending_expense):
         """Test update with very long description."""
         long_description = 'A' * 1000  # 1000 character description
@@ -274,6 +311,9 @@ class TestUpdateExpenseEdgeCases:
         assert len(response_data['expense']['description']) == 1000
         assert response_data["message"] == "Expense updated successfully"
     
+    @allure.title("Handle special characters in expense description")
+    @allure.description("Test update with special characters in description")
+    @allure.severity(allure.severity_level.MINOR)
     def test_update_expense_special_characters(self, authenticated_session, base_url, pending_expense):
         """Test update with special characters in description."""
         special_description = "Business meal with client @#$%^&*()[]{}|;':\",./<>?`~"
@@ -294,6 +334,9 @@ class TestUpdateExpenseEdgeCases:
         assert response_data['expense']['description'] == special_description
         assert response_data["message"] == "Expense updated successfully"
 
+    @allure.title("Handle unicode characters in expense description")
+    @allure.description("Test update with unicode characters and emojis in description")
+    @allure.severity(allure.severity_level.MINOR)
     def test_update_expense_unicode_characters(self, authenticated_session, base_url, pending_expense):
         """Test update with unicode characters."""
         unicode_description = "Client meeting at café with naïve résumé discussion 🍕"
@@ -314,6 +357,9 @@ class TestUpdateExpenseEdgeCases:
         assert response_data['expense']['description'] == unicode_description
         assert response_data["message"] == "Expense updated successfully"
     
+    @allure.title("Handle future date in expense update")
+    @allure.description("Test update with future date (should be rejected but is allowed due to bug)")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_expense_future_date(self, authenticated_session, base_url, pending_expense):
         """Test update with future date."""
         update_data = {
@@ -333,6 +379,9 @@ class TestUpdateExpenseEdgeCases:
         response_data = response.json()
         assert response_data['expense']['date'] == '2026-04-01'
     
+    @allure.title("Handle past date in expense update")
+    @allure.description("Test update with very old date (should be allowed)")
+    @allure.severity(allure.severity_level.MINOR)
     def test_update_expense_past_date(self, authenticated_session, base_url, pending_expense):
         """Test update with very old date."""
         update_data = {
@@ -353,9 +402,15 @@ class TestUpdateExpenseEdgeCases:
         assert response_data['expense']['date'] == '2020-01-01'
 
 
+@allure.epic("Expense Management System")
+@allure.feature("Expense Updates - API Integration")
+@allure.story("As an employee, I want to edit expenses that are still pending so that I can correct mistakes before they are reviewed")
 class TestUpdateExpenseBoundaryConditions:
     """Test boundary conditions for expense updates."""
     
+    @allure.title("Fail to update expense with zero amount")
+    @allure.description("Test that zero amounts are properly rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_zero_amount(self, authenticated_session, base_url, pending_expense):
         """Test update with zero amount."""
         update_data = {
@@ -376,6 +431,9 @@ class TestUpdateExpenseBoundaryConditions:
         assert 'error' in response_data
         assert 'amount must be greater than 0' in response_data['error'].lower()
         
+    @allure.title("Fail to update expense with negative amount")
+    @allure.description("Test that negative amounts are properly rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_negative_amount(self, authenticated_session, base_url, pending_expense):
         """Test update with negative amount."""
         update_data = {
@@ -396,6 +454,9 @@ class TestUpdateExpenseBoundaryConditions:
         assert 'error' in response_data
         assert 'amount must be greater than 0' in response_data['error'].lower()
     
+    @allure.title("Handle very large expense amounts")
+    @allure.description("Test update with very large amount values")
+    @allure.severity(allure.severity_level.NORMAL)
     def test_update_expense_very_large_amount(self, authenticated_session, base_url, pending_expense):
         """Test update with very large amount."""
         update_data = {
@@ -415,6 +476,9 @@ class TestUpdateExpenseBoundaryConditions:
         response_data = response.json()
         assert float(response_data['expense']['amount']) == 999999999.99
     
+    @allure.title("Fail to update expense with invalid amount types")
+    @allure.description("Test that non-numeric amount values are properly rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_invalid_amount_types(self, authenticated_session, base_url, pending_expense):
         """Test update with invalid amount data types."""
         invalid_amounts = [
@@ -443,6 +507,9 @@ class TestUpdateExpenseBoundaryConditions:
             assert 'error' in response_data
             assert 'amount must be a valid number' in response_data['error'].lower() 
     
+    @allure.title("Fail to update expense with empty description")
+    @allure.description("Test that empty descriptions are properly rejected")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_empty_description(self, authenticated_session, base_url, pending_expense):
         """Test update with empty description."""
         update_data = {
@@ -463,6 +530,9 @@ class TestUpdateExpenseBoundaryConditions:
         assert 'error' in response_data
         assert 'description is required' in response_data['error'].lower()
     
+    @allure.title("Fail to update expense with invalid date formats")
+    @allure.description("Test that invalid date formats are properly rejected (should be rejected but is allowed due to bug)")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_update_expense_invalid_date_format(self, authenticated_session, base_url, pending_expense):
         """Test update with invalid date format."""
         invalid_dates = [
