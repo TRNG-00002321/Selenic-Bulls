@@ -36,8 +36,9 @@ def test_login_invalid_password(session):
         response = session.post(f"{BASE_URL}/login", json=payload)
 
     with allure.step("Assert: Unauthorized response is returned"):
-        assert response.status_code == 401
+        assert response.status_code == 401 #unauthorized
         assert 'error' in response.json()
+        assert response.json()['error'] == 'Invalid credentials'
 
 
 @allure.severity(allure.severity_level.NORMAL)
@@ -50,6 +51,8 @@ def test_login_missing_username(session):
 
     with allure.step("Assert: Bad request is returned"):
         assert response.status_code == 400
+        assert 'error' in response.json()
+        assert response.json()['error'] == 'Username and password required'
 
 
 @allure.severity(allure.severity_level.NORMAL)
@@ -62,6 +65,8 @@ def test_login_missing_password(session):
 
     with allure.step("Assert: Bad request is returned"):
         assert response.status_code == 400
+        assert 'error' in response.json()
+        assert response.json()['error'] == 'Username and password required'
 
 
 @allure.severity(allure.severity_level.NORMAL)
@@ -73,6 +78,9 @@ def test_login_empty_body(session):
 
     with allure.step("Assert: Bad request is returned"):
         assert response.status_code == 400
+        assert 'error' in response.json()
+        assert response.json()['error'] == 'JSON data required'
+
 
 
 # ==================== LOGOUT TEST ====================

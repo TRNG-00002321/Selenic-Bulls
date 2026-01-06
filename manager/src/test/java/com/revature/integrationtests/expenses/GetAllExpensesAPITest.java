@@ -105,7 +105,6 @@ public class GetAllExpensesAPITest {
             .body("data", notNullValue())
             .body("data", isA(List.class))
             .body("count", greaterThanOrEqualTo(0))
-            //Fix the count to be equal to the size of the data list instead of hardcoded value
             .body("count", equalTo(3));
         
         Allure.step("Assert: Validated successful response with all expenses data");

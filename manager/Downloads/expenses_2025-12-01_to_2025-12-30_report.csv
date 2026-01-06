@@ -1,0 +1,4 @@
+Expense ID,Employee,Amount,Description,Date,Status,Reviewer,Comment,Review Date
+1,employee1,10.0,Pizza,2025-12-29,pending,,,
+3,employee1,500.05,Hotel,2025-12-25,denied,2,Expense not covered for holidays.,2025-12-29 14:11:47
+2,employee1,25.01,Notebook,2025-12-22,approved,2,Good choice for note taking.,2025-12-29 14:12:35

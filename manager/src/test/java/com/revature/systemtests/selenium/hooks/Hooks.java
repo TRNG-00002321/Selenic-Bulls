@@ -29,7 +29,7 @@ public class Hooks {
     private static DatabaseConnection databaseConnection;
     
     // For database state management
-    private Connection connection;
+    private static Connection connection;
 
 
     @BeforeAll
@@ -41,7 +41,6 @@ public class Hooks {
         context = TestContext.getInstance();
         driver = context.getDriver();
         wait = new WebDriverWait(driver, java.time.Duration.ofSeconds(10));
-        databaseConnection = new DatabaseConnection();
         databaseConnection = new DatabaseConnection();
 
         //Check if application is running
@@ -75,7 +74,7 @@ public class Hooks {
     }
 
     @Before("@emptyDatabase")
-    public void emptyDatabase() {
+    public static void emptyDatabase() {
         try {
             // Start transaction to enable rollback
             connection = databaseConnection.getConnection();
@@ -103,7 +102,8 @@ public class Hooks {
     }
 
     @After("@restoreDatabase")
-    public void restoreDatabase() {
+    public static void restoreDatabase() {
+        emptyDatabase();
         try {
             if (connection != null) {
                 // If connection was started, seed with default test data
@@ -134,11 +134,52 @@ public class Hooks {
         }
     }
     
+    @Before("@seedPendingExpense")
+    public static void seedPendingExpense() {
+        try (Connection conn = databaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            
+            // First, ensure we have test users (assuming user IDs 1 and 2 exist)
+            // Insert test expenses
+            String insertExpenseSql = "INSERT INTO expenses (user_id, amount, description, date) VALUES (?, ?, ?, ?)";
+            
+            int pendingExpenseId, approvedExpenseId, deniedExpenseId;
+            
+            // Pending expense
+            try (PreparedStatement stmt = conn.prepareStatement(insertExpenseSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                stmt.setInt(1, 1); // user_id
+                stmt.setDouble(2, 1500.00);
+                stmt.setString(3, "Travel Flight");
+                stmt.setString(4, "2026-01-05");
+                stmt.executeUpdate();
+                
+                ResultSet rs = stmt.getGeneratedKeys();
+                rs.next();
+                pendingExpenseId = rs.getInt(1);
+            }
+
+            // Insert corresponding approvals
+            String insertApprovalSql = "INSERT INTO approvals (expense_id, status, reviewer, comment, review_date) VALUES (?, ?, ?, ?, ?)";
+            
+            // Pending approval
+            try (PreparedStatement stmt = conn.prepareStatement(insertApprovalSql)) {
+                stmt.setInt(1, pendingExpenseId);
+                stmt.setString(2, "pending");
+                stmt.setObject(3, null); // no reviewer yet
+                stmt.setObject(4, null); // no comment yet
+                stmt.setObject(5, null); // no review date yet
+                stmt.executeUpdate();
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to seed pending expenses", e);
+        }
+    }
     
     /**
      * Seed database with default test data: one pending, one approved, one denied expense
      */
-    private void seedDefaultTestData() throws SQLException {
+    private static void seedDefaultTestData() throws SQLException {
         try (Connection conn = databaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             

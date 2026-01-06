@@ -1,4 +1,5 @@
 # Hooks (setup/teardown) for the Selenium tests
+from dbm import sqlite3
 import os
 import pytest
 from selenium import webdriver
@@ -18,16 +19,13 @@ def before_feature(context, feature):
     browser = context.config.userdata.get("browser", "chrome").lower()
 
     if browser == "chrome":
-        service = ChromeService(ChromeDriverManager().install())
-        context.driver = webdriver.Chrome(service=service, options=get_chrome_options())
+        context.driver = webdriver.Chrome(options=get_chrome_options())
     
     elif browser == "firefox":
-        service = FirefoxService(GeckoDriverManager().install())
-        context.driver = webdriver.Firefox(service=service)
+        context.driver = webdriver.Firefox()
     
     elif browser == "edge":
-        service = EdgeService(executable_path="/usr/local/bin/msedgedriver")
-        context.driver = webdriver.Edge(service=service)
+        context.driver = webdriver.Edge()
     
     else:
         raise ValueError(f"Unsupported browser: {browser}")
@@ -69,13 +67,34 @@ def before_feature(context, feature):
 def after_feature(context, feature):
     context.driver.quit()
 
+def after_scenario(context, scenario):
+    if "submitExpense" in scenario.tags:
+        # Ensure the path to the DB is correct relative to the 'selenium' folder
+        conn = sqlite3.connect('../../expense_manager.db') 
+        cursor = conn.cursor()
+        try:
+            cursor.execute("DELETE FROM expenses WHERE description = 'Team Lunch at Olive Garden'")
+            conn.commit()
+        finally:
+            conn.close()
+
 # restore database (submit an expense with the same data as the one deleted in tests)
 # used for particular tests with @restore_db, @cancel tags
 def after_scenario(context, scenario):
     if "cancel" in scenario.effective_tags:
-        context.driver.find_element("id", "cancel-edit").click()
+        context.wait.until(EC.visibility_of_element_located(("id", "cancel-edit"))).click()
+        #context.driver.find_element("id", "cancel-edit").click()
         return
     
+    if "submitExpense" in scenario.effective_tags:
+        db_connection = DatabaseConnection()
+        
+        # Reset the database to ensure consistency
+        with db_connection.get_connection() as conn:
+            # First delete all approvals
+            conn.execute("DELETE FROM expenses WHERE description = 'Team Lunch at Olive Garden'")
+            conn.commit()
+            
     if "restore_db" in scenario.effective_tags:
         db_connection = DatabaseConnection()
         
