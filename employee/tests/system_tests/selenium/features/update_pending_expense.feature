@@ -24,50 +24,29 @@ Feature: Update Pending Expense
         And I should see the expense with description "Pizza" and status "Pending" unchanged in the expenses list
         
     @negative @cancel
-    Scenario: Fail to update a pending expense with a negative amount
+    Scenario Outline: Fail to update a pending expense with invalid input values
         When I click the edit button for the expense with description "Pizza" and status "Pending"
         Then I should see an edit expense header titled "Edit Expense"
-        When I update the amount to "-5.00"
+        When I update the <field> to "<value>"
         And I click the update expense button
-        Then I should see an amount validation error message containing "0.01"
-    
-    @negative @cancel
-    Scenario: Fail to update a pending expense with a space description
-        When I click the edit button for the expense with description "Pizza" and status "Pending"
-        Then I should see an edit expense header titled "Edit Expense"
-        When I update the description to "   "
-        And I click the update expense button
-        Then I should see a message "Description is required"
-
+        Then I should see a <field> validation error message containing "<error_text>"
+        
+        Examples:
+            | field       | value      | error_text              |
+            | amount      | -5.00      | 0.01                    |
+            | description | WHITESPACE | Description is required |
+            | date        | yyyy-12-dd | Please                  |
 
     @negative @cancel
-    Scenario: Fail to update a pending expense with a partial date
+    Scenario Outline: Fail to update a pending expense with empty required fields
         When I click the edit button for the expense with description "Pizza" and status "Pending"
         Then I should see an edit expense header titled "Edit Expense"
-        When I update the date to "yyyy-12-dd"
+        When I clear the "<field>" field
         And I click the update expense button
-        Then I should see a date validation error message containing "Please"
-
-    @negative @cancel
-    Scenario: Fail to update a pending expense with an empty amount
-        When I click the edit button for the expense with description "Pizza" and status "Pending"
-        Then I should see an edit expense header titled "Edit Expense"
-        When I clear the "amount" field
-        And I click the update expense button
-        Then I should see an amount validation error message containing "Please"
-    
-    @negative @cancel
-    Scenario: Fail to update a pending expense with an empty description
-        When I click the edit button for the expense with description "Pizza" and status "Pending"
-        Then I should see an edit expense header titled "Edit Expense"
-        When I clear the "description" field
-        And I click the update expense button
-        Then I should see a description validation error message "Please fill out this field."
-    
-    @negative @cancel
-    Scenario: Fail to update a pending expense with an empty date
-        When I click the edit button for the expense with description "Pizza" and status "Pending"
-        Then I should see an edit expense header titled "Edit Expense"
-        When I clear the "date" field
-        And I click the update expense button
-        Then I should see a date validation error message containing "Please"
+        Then I should see a <field> validation error message containing "<error_text>"
+        
+        Examples:
+            | field       | error_text      |
+            | amount      | Please fill out |
+            | description | Please fill out |
+            | date        | Please fill out |

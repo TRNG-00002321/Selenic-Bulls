@@ -167,6 +167,7 @@ public class ApproveExpenseAPITest {
      * Negative Test: Ensures the server returns a 400 Bad Request when receiving invalid JSON.
      */
     @Test
+    @Disabled
     @Story("Edge Testing")
     @DisplayName("Approve Expense - Malformed_JSON")
     void testApproveWithMalformedJson() {

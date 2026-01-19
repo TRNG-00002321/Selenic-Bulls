@@ -67,17 +67,6 @@ def before_feature(context, feature):
 def after_feature(context, feature):
     context.driver.quit()
 
-def after_scenario(context, scenario):
-    if "submitExpense" in scenario.tags:
-        # Ensure the path to the DB is correct relative to the 'selenium' folder
-        conn = sqlite3.connect('../../expense_manager.db') 
-        cursor = conn.cursor()
-        try:
-            cursor.execute("DELETE FROM expenses WHERE description = 'Team Lunch at Olive Garden'")
-            conn.commit()
-        finally:
-            conn.close()
-
 # restore database (submit an expense with the same data as the one deleted in tests)
 # used for particular tests with @restore_db, @cancel tags
 def after_scenario(context, scenario):
@@ -85,15 +74,6 @@ def after_scenario(context, scenario):
         context.wait.until(EC.visibility_of_element_located(("id", "cancel-edit"))).click()
         #context.driver.find_element("id", "cancel-edit").click()
         return
-    
-    if "submitExpense" in scenario.effective_tags:
-        db_connection = DatabaseConnection()
-        
-        # Reset the database to ensure consistency
-        with db_connection.get_connection() as conn:
-            # First delete all approvals
-            conn.execute("DELETE FROM expenses WHERE description = 'Team Lunch at Olive Garden'")
-            conn.commit()
             
     if "restore_db" in scenario.effective_tags:
         db_connection = DatabaseConnection()

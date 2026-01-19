@@ -53,16 +53,114 @@ def step_impl(context, expected_msg):
     assert expected_msg in msg_element.text
 
 
-@then('the new expense "{description}" should appear in "My Expenses" as "{expected_status}"')
-def step_impl(context, description, expected_status):
-    # 1. Switch back to the View Expenses section
-    # Based on your HTML buttons, we may need to click 'View My Expenses'
-    context.driver.find_element(By.ID, "show-expenses").click()
+@when('the employee enters invalid {field} value "{value}"')
+def step_enter_invalid_field_value(context, field, value):
+    # Fill out fields in order: amount, description, date
+    # Fill preceding fields with valid values before testing target field
+    
+    if field == "amount":
+        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field.clear()
+        amount_field.send_keys(value)
+    
+    elif field == "description":
+        # Fill amount with valid value first
+        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field.clear()
+        amount_field.send_keys("50.00")
+        
+        # Then fill description with invalid value
+        desc_field = context.driver.find_element(By.ID, "description")
+        desc_field.clear()
+        if value == "WHITESPACE":
+            desc_field.send_keys("   ")
+        else:
+            desc_field.send_keys(value)
+    
+    elif field == "date":
+        # Fill amount with valid value first
+        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field.clear()
+        amount_field.send_keys("50.00")
+        
+        # Fill description with valid value
+        desc_field = context.driver.find_element(By.ID, "description")
+        desc_field.clear()
+        desc_field.send_keys("Valid Description")
+        
+        # Then fill date with invalid value
+        date_field = context.driver.find_element(By.ID, "date")
+        date_field.clear()
+        date_field.send_keys(value)
 
-    # 2. Locate the row in the table containing our description
-    # XPath searches the table rows for the specific text
-    xpath = f"//div[@id='expenses-list']//tr[td[contains(text(), '{description}')]]"
-    row = context.wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+@when('the employee leaves the "{field}" field empty')
+def step_leave_field_empty(context, field):
+    field_id_map = {
+        "amount": "amount",
+        "description": "description", 
+        "date": "date"
+    }
+    field_id = field_id_map.get(field)
+    assert field_id is not None, f"Unknown field name: {field}"
+    
+    # Fill out fields in order: amount, description, date
+    # Fill preceding fields with valid values before leaving target field empty
+    
+    if field == "amount":
+        # Just clear the amount field
+        input_field = context.driver.find_element(By.ID, field_id)
+        input_field.clear()
+    
+    elif field == "description":
+        # Fill amount with valid value first
+        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field.clear()
+        amount_field.send_keys("50.00")
+        
+        # Leave description empty
+        input_field = context.driver.find_element(By.ID, field_id)
+        input_field.clear()
+    
+    elif field == "date":
+        # Fill amount with valid value first
+        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field.clear()
+        amount_field.send_keys("50.00")
+        
+        # Fill description with valid value
+        desc_field = context.driver.find_element(By.ID, "description")
+        desc_field.clear()
+        desc_field.send_keys("Valid Description")
+        
+        # Leave date empty
+        input_field = context.driver.find_element(By.ID, field_id)
+        input_field.clear()
 
-    # 3. Verify the status in that row matches 'PENDING' (orange text)
-    assert expected_status in row.text
+@then('a {field} validation error message containing "{error_text}" should be displayed for submit form')
+def step_see_submit_validation_error(context, field, error_text):
+    field_id_map = {
+        "amount": "amount",
+        "description": "description",
+        "date": "date"
+    }
+    field_id = field_id_map.get(field)
+    assert field_id is not None, f"Unknown field name: {field}"
+    
+    input_field = context.wait.until(
+        EC.visibility_of_element_located((By.ID, field_id))
+    )
+    
+    if field == "description" and error_text == "Description is required":
+        # Special case: check for custom validation message in the UI
+        try:
+            message_element = context.driver.find_element(By.ID, "submit-message")
+            assert error_text in message_element.text
+        except:
+            # Fallback to HTML5 validation message
+            context.wait.until(lambda d: input_field.get_attribute("validationMessage") != "")
+            assert error_text in input_field.get_attribute("validationMessage")
+    else:
+        # Standard HTML5 validation message check
+        context.wait.until(lambda d: input_field.get_attribute("validationMessage") != "")
+        validation_message = input_field.get_attribute("validationMessage")
+        assert error_text in validation_message, f"Expected '{error_text}' to be in '{validation_message}'"

@@ -187,3 +187,4 @@ def step_password_required_validation(context):
 
     assert password.get_attribute("validationMessage").__contains__("fill out this field")
 
+

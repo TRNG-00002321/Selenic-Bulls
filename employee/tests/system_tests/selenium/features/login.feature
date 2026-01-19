@@ -14,16 +14,15 @@ Feature: Employee Login
     And the user should be authenticated
 
   @negative
-  Scenario: Login fails with incorrect password
-    When the user logs in with username "employee1" and password "wrongpassword"
+  Scenario Outline: Login fails with invalid credentials
+    When the user logs in with username "<username>" and password "<password>"
     Then the login should fail
     And an error message should be returned
 
-  @negative
-  Scenario: Login fails with non-existent username
-    When the user logs in with username "unknown_user" and password "password123"
-    Then the login should fail
-    And an error message should be returned
+  Examples:
+    | username       | password        |
+    | employee1      | wrongpassword   |
+    | unknown_user   | password123     |
 
   @negative
   Scenario: Login fails with empty username and password
@@ -31,11 +30,8 @@ Feature: Employee Login
     Then a username required validation message is shown
     And the user remains on the login page
 
-
   @negative
   Scenario: Login fails with empty password
     When the user submits the login form with username "employee1" and empty password
     Then a password required validation message is shown
     And the user remains on the login page
-
-

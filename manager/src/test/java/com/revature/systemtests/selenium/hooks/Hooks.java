@@ -77,6 +77,7 @@ public class Hooks {
     public static void emptyDatabase() {
         try {
             // Start transaction to enable rollback
+            databaseConnection = new DatabaseConnection();
             connection = databaseConnection.getConnection();
             connection.setAutoCommit(false);
             

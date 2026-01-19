@@ -11,6 +11,7 @@ import io.restassured.specification.ResponseSpecification;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import com.revature.systemtests.selenium.hooks.Hooks;
 
 // Allure Report Annotations
 import io.qameta.allure.*;
@@ -192,7 +193,8 @@ public class GetPendingExpensesAPITest {
     void testGetPendingExpensesEmptyDatabase() {
         Allure.step("Arrange: Prepare authenticated request for empty database scenario");
         Allure.addAttachment("Test Scenario", "Boundary Test - Empty pending expenses database");
-        Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of pending expenses");
+        Hooks.emptyDatabase();
+        //Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of pending expenses");
         
         // The response should still be successful even when there are no pending expenses
         // It should return an empty data list (not null) with the count as 0
@@ -210,5 +212,7 @@ public class GetPendingExpensesAPITest {
             .body("count", equalTo(0));
         
         Allure.step("Assert: Validated graceful handling of empty pending expenses");
+
+        Hooks.restoreDatabase();
     }
 }

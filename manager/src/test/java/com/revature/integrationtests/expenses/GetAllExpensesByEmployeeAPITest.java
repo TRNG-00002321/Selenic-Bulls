@@ -11,6 +11,7 @@ import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import static org.hamcrest.Matchers.*;
+import com.revature.systemtests.selenium.hooks.Hooks;
 
 // Allure Report Annotations
 import io.qameta.allure.*;
@@ -347,7 +348,8 @@ public class GetAllExpensesByEmployeeAPITest {
     void testGetExpensesByEmployeeEmptyExpensesList() {
         Allure.step("Arrange: Prepare authenticated request for empty employee expenses scenario");
         Allure.addAttachment("Test Scenario", "Boundary Test - Empty employee expenses list");
-        Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of expenses for employee ID: " + VALID_EMPLOYEE_ID);
+        Hooks.emptyDatabase();
+        //Allure.addAttachment("Warning", "This test is expected to fail until database is cleared of expenses for employee ID: " + VALID_EMPLOYEE_ID);
         
         //This test is expected to fail until the database is cleared of all expenses for the employee
         Allure.step("Act: Send authenticated GET request expecting empty employee expenses list");
@@ -365,5 +367,7 @@ public class GetAllExpensesByEmployeeAPITest {
             .body("employeeId", equalTo(VALID_EMPLOYEE_ID));
         
         Allure.step("Assert: Validated graceful handling of empty employee expenses list");
+
+        Hooks.restoreDatabase();
     }
 }

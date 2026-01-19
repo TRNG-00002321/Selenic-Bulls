@@ -3,8 +3,9 @@ myenv/
 DatabaseConnection.java
 target/
 .pytest_cache/
-/allure-results/
-/allure-report/
+allure-results/
+allure-report/
 **/.DS_Store
 htmlcov/
 __pycache__/
+.vscode/
