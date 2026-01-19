@@ -10,8 +10,8 @@ pipeline {
         APP_PORT = '5001'
 
         // AWS EC2 deployment target
-        EC2_HOST = credentials('ec2-deploy-host')
-        EC2_USER = 'ec2-user'
+        //EC2_HOST = credentials('ec2-deploy-host')
+        //EC2_USER = 'ec2-user'
 
         // Build version
         BUILD_VERSION = "${BUILD_NUMBER}"
