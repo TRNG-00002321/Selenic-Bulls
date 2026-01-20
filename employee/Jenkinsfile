@@ -59,8 +59,9 @@ pipeline {
                 sh '''
                     mkdir -p allure-results test-results
                     
-                    pip install --quiet -r employee/requirements.txt
-                    python -m pytest employee/tests/unit_tests -v \
+                    cd employee
+                    pip install --quiet -r requirements.txt
+                    python -m pytest tests/unit_tests -v \
                     --alluredir=allure-results \
                     --junitxml=test-results/unit-results.xml
                 '''
