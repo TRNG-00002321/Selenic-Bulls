@@ -19,12 +19,15 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install wget for health checks
+RUN apk add --no-cache wget
+
 # Create non-root user for security
 RUN addgroup -g 1001 appgroup && \
     adduser -u 1001 -G appgroup -D appuser
 
 # Copy the built JAR from builder stage
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/manager-1.0-SNAPSHOT.jar app.jar
 
 # Create directory for database (shared volume mount point)
 RUN mkdir -p /data && chown appuser:appgroup /data
