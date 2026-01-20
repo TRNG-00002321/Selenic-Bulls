@@ -9,3 +9,4 @@ pytest
 PyJWT==2.8.0
 allure-pytest
 pytest-mock
+requests
