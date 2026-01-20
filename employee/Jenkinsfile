@@ -60,7 +60,7 @@ pipeline {
                     mkdir -p allure-results test-results
                     
                     pip install --quiet -r employee/requirements.txt
-                    pytest employee/tests/unit_tests -v \
+                    python -m pytest employee/tests/unit_tests -v \
                     --alluredir=allure-results \
                     --junitxml=test-results/unit-results.xml
                 '''
