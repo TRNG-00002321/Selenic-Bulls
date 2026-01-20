@@ -52,6 +52,7 @@ public class Main {
                 });
             });
             
+            //Commented out to manually serve static files
             // Enable static file serving from resources
 //            config.staticFiles.add(staticFiles -> {
 //                staticFiles.hostedPath = "/";
