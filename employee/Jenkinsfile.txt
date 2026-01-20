@@ -181,15 +181,19 @@ pipeline {
         }
 
         stage('Allure Report') {
-            post {
-                always {
-                    allure([
-                        includeProperties: false,
-                        results: [[path: 'allure-results']]
-                    ])
-                }
+            steps {
+                echo '📊 Generating Allure Report...'
             }
+        post {
+        always {
+            allure([
+                includeProperties: false,
+                results: [[path: 'allure-results']]
+            ])
         }
+    }
+}
+
     }
 
     post {
