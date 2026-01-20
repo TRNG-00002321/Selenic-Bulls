@@ -40,7 +40,7 @@ public class Main {
         AuthenticationMiddleware authMiddleware = new AuthenticationMiddleware(authenticationService);
         ExpenseController expenseController = new ExpenseController(expenseService);
         ReportController reportController = new ReportController(expenseService);
-        
+
         // Configure and start Javalin application
         Javalin app = Javalin.create(config -> {
             // Enable CORS for cross-origin requests from frontend
@@ -53,11 +53,12 @@ public class Main {
             });
             
             // Enable static file serving from resources
-            config.staticFiles.add(staticFiles -> {
-                staticFiles.hostedPath = "/";
-                staticFiles.directory = "/";
-                staticFiles.location = Location.CLASSPATH;
-            });
+//            config.staticFiles.add(staticFiles -> {
+//                staticFiles.hostedPath = "/";
+//                staticFiles.directory = "/";
+//                staticFiles.location = Location.CLASSPATH;
+//                staticFiles.precompress = false;
+//            });
             
             // Enable request logging
             config.bundledPlugins.enableDevLogging();
@@ -74,7 +75,58 @@ public class Main {
         });
         
         // Root redirect to manager dashboard
-        app.get("/", ctx -> ctx.redirect("/manager.html"));
+//        app.get("/", ctx -> ctx.redirect("/manager.html"));
+
+        // === STATIC FILE ROUTES - Add these before other routes ===
+        app.get("/", ctx -> {
+            var htmlStream = Main.class.getClassLoader().getResourceAsStream("manager.html");
+            if (htmlStream != null) {
+                ctx.contentType("text/html");
+                ctx.result(htmlStream);
+            } else {
+                ctx.status(404).result("manager.html not found");
+            }
+        });
+
+        app.get("/manager.html", ctx -> {
+            var htmlStream = Main.class.getClassLoader().getResourceAsStream("manager.html");
+            if (htmlStream != null) {
+                ctx.contentType("text/html");
+                ctx.result(htmlStream);
+            } else {
+                ctx.status(404).result("manager.html not found");
+            }
+        });
+
+        app.get("/login.html", ctx -> {
+            var htmlStream = Main.class.getClassLoader().getResourceAsStream("login.html");
+            if (htmlStream != null) {
+                ctx.contentType("text/html");
+                ctx.result(htmlStream);
+            } else {
+                ctx.status(404).result("login.html not found");
+            }
+        });
+
+        app.get("/manager.js", ctx -> {
+            var jsStream = Main.class.getClassLoader().getResourceAsStream("manager.js");
+            if (jsStream != null) {
+                ctx.contentType("application/javascript");
+                ctx.result(jsStream);
+            } else {
+                ctx.status(404).result("manager.js not found");
+            }
+        });
+
+        app.get("/auth.js", ctx -> {
+            var jsStream = Main.class.getClassLoader().getResourceAsStream("auth.js");
+            if (jsStream != null) {
+                ctx.contentType("application/javascript");
+                ctx.result(jsStream);
+            } else {
+                ctx.status(404).result("auth.js not found");
+            }
+        });
         
         // Authentication status endpoint (no auth required)
         app.get("/api/auth/status", ctx -> {
