@@ -6,7 +6,7 @@ services:
   employee-app:
     image: expense-employee:latest
     build:
-      context: ./expense_apps/employee
+      context: ./employee
       dockerfile: Dockerfile
     container_name: expense-employee
     ports:
@@ -39,7 +39,7 @@ services:
   manager-app:
     image: expense-manager:latest
     build:
-      context: ./expense_apps/manager
+      context: ./manager
       dockerfile: Dockerfile
     container_name: expense-manager
     ports:
