@@ -86,7 +86,7 @@ pipeline {
                     
                     cd employee
                     pip install --quiet -r requirements.txt
-                    pytest tests/integration -v -m integration \
+                    pytest tests/integration_tests -v \
                         --alluredir=/app/allure-results \
                         --junitxml=/app/test-results/integration-results.xml
                 '''
