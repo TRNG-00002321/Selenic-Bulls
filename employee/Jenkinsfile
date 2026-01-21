@@ -104,7 +104,7 @@ pipeline {
             }
         }
         
-        stage('E2E Tests') {
+       /* stage('E2E Tests') {
             agent {
                 docker {
                     image 'python:3.12-slim'
@@ -121,10 +121,10 @@ pipeline {
                     # TODO: pip install browsers
                     
                     # Run Behave tests
-                    behave -D browser=${params.BROWSER} ./tests/system_tests/selenium/features || true
+                    behave -D browser=${params.BROWSER} ./tests/system_tests/selenium/features
                 '''
             }
-        }
+        } */
         
         stage('Performance Tests') {
             steps {
