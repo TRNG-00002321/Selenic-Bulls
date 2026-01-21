@@ -4,23 +4,15 @@
 pipeline {
     agent any
 
-    environment {
-        // Application image name
-        APP_NAME = 'expense-manager'
-        APP_PORT = '5001'
-
-        // AWS EC2 deployment target
-        //EC2_HOST = credentials('ec2-deploy-host')
-        //EC2_USER = 'ec2-user'
-
-        // Build version
-        BUILD_VERSION = "${BUILD_NUMBER}"
-
-        // Docker-in-Docker: Host workspace path
-        // When Jenkins runs in a container, Docker daemon needs the HOST path
-        // Set JENKINS_HOME_HOST in Jenkins container env (e.g., /home/ec2-user/jenkins_home)
-        WORKSPACE_HOST = "${env.JENKINS_HOME_HOST ?: env.JENKINS_HOME}/workspace/${env.JOB_NAME}"
-    }
+    environment 
+    {
+    APP_NAME = 'expense-manager'
+    APP_PORT = '5001'
+    BUILD_VERSION = "${BUILD_NUMBER}"
+    
+    // Point to the manager subdirectory where pom.xml exists
+    WORKSPACE_HOST = "${env.JENKINS_HOME_HOST ?: env.JENKINS_HOME}/workspace/${env.JOB_NAME}/manager"
+}
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
