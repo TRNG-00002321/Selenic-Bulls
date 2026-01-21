@@ -15,11 +15,6 @@ pipeline {
 
         // Build version
         BUILD_VERSION = "${BUILD_NUMBER}"
-
-        // Docker-in-Docker: Host workspace path
-        // The manager folder is a subdirectory in the repo, so we need to work from there
-        // We'll use the workspace directly and cd into manager for operations
-        WORKSPACE_HOST = "${env.JENKINS_HOME_HOST ?: env.JENKINS_HOME}/workspace/${env.JOB_NAME}"
     }
 
     options {
@@ -41,23 +36,6 @@ pipeline {
                     ).trim()
                     echo "Building commit: ${env.GIT_COMMIT_SHORT}"
                 }
-                
-                // Debug: Check directory structure
-                sh '''
-                    echo "=== Workspace Contents ==="
-                    ls -la
-                    echo ""
-                    echo "=== Looking for pom.xml ==="
-                    find . -name "pom.xml" -type f
-                    echo ""
-                    echo "=== Checking if manager directory exists ==="
-                    if [ -d "manager" ]; then
-                        echo "✅ manager directory exists"
-                        ls -la manager/
-                    else
-                        echo "❌ manager directory does NOT exist"
-                    fi
-                '''
             }
         }
 
@@ -69,8 +47,9 @@ pipeline {
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 sh '''
+                    cd manager
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}/manager:/app \
+                        -v $(pwd):/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         maven:3.9-eclipse-temurin-21 \
@@ -90,8 +69,9 @@ pipeline {
             steps {
                 echo '🔗 Running Java Integration Tests with Real Database...'
                 sh '''
+                    cd manager
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}/manager:/app \
+                        -v $(pwd):/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         maven:3.9-eclipse-temurin-21 \
@@ -152,9 +132,10 @@ pipeline {
             steps {
                 echo '🔌 Running Java API Tests (REST Assured + Integration)...'
                 sh '''
+                    cd manager
                     docker run --rm \
                         --network host \
-                        -v ${WORKSPACE_HOST}/manager:/app \
+                        -v $(pwd):/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         -e API_BASE_URL=http://localhost:${APP_PORT} \
@@ -171,9 +152,10 @@ pipeline {
             steps {
                 echo '🌐 Running Java E2E Tests (Cucumber + Integration)...'
                 sh '''
+                    cd manager
                     docker run --rm \
                         --network host \
-                        -v ${WORKSPACE_HOST}/manager:/app \
+                        -v $(pwd):/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         -e APP_URL=http://localhost:${APP_PORT} \
@@ -192,9 +174,10 @@ pipeline {
                 sh '''
                     if [ -d "manager/tests/performance" ]; then
                         mkdir -p manager/jmeter-results
+                        cd manager
                         docker run --rm \
                             --network host \
-                            -v ${WORKSPACE_HOST}/manager:/workspace \
+                            -v $(pwd):/workspace \
                             -w /workspace \
                             justb4/jmeter:latest \
                             -n \
@@ -218,8 +201,9 @@ pipeline {
             steps {
                 echo '📈 Generating JaCoCo Coverage Report...'
                 sh '''
+                    cd manager
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}/manager:/app \
+                        -v $(pwd):/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         maven:3.9-eclipse-temurin-21 \
