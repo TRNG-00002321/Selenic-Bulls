@@ -41,6 +41,23 @@ pipeline {
                     ).trim()
                     echo "Building commit: ${env.GIT_COMMIT_SHORT}"
                 }
+                
+                // Debug: Check directory structure
+                sh '''
+                    echo "=== Workspace Contents ==="
+                    ls -la
+                    echo ""
+                    echo "=== Looking for pom.xml ==="
+                    find . -name "pom.xml" -type f
+                    echo ""
+                    echo "=== Checking if manager directory exists ==="
+                    if [ -d "manager" ]; then
+                        echo "✅ manager directory exists"
+                        ls -la manager/
+                    else
+                        echo "❌ manager directory does NOT exist"
+                    fi
+                '''
             }
         }
 
