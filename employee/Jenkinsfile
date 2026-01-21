@@ -73,43 +73,6 @@ pipeline {
             }
         }
         
-        // ============================================
-        // BUILD: Only after tests pass
-        // ============================================
-        
-        stage('Build Docker Image') {
-            steps {
-                echo '🐍 Building Python Employee Application...'
-                sh '''
-                    cd employee
-                    docker build \
-                        -t ${APP_NAME}:${BUILD_VERSION} \
-                        -t ${APP_NAME}:latest \
-                        -f Dockerfile .
-                '''
-            }
-        }
-        
-        stage('Start Application') {
-            steps {
-                echo '🚀 Starting Employee App for API/E2E Testing...'
-                sh '''
-                    # Stop any existing container
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-                    
-                    # Start the container
-                    docker compose up employee
-                    
-                    # Wait for app to be healthy
-                    echo "Waiting for application to start..."
-                    sleep 15
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
-                    echo "✅ Application is ready!"
-                '''
-            }
-        }
-        
         stage('API Tests') {
             agent {
                 docker {
@@ -120,9 +83,11 @@ pipeline {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     mkdir -p allure-results test-results
-                    
+
                     cd employee
                     pip install --quiet -r requirements.txt
+                    & python main.py &  # Start the app in the background
+                    sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
                         --alluredir=/app/allure-results \
                         --junitxml=/app/test-results/integration-results.xml
@@ -301,6 +266,47 @@ EOF
                         rm ${APP_NAME}.tar.gz
                     '''
                 }
+            }
+        }
+
+         // ============================================
+        // BUILD: Only after tests pass
+        // ============================================
+        
+        stage('Build Docker Image') {
+            steps {
+                echo '🐍 Building Python Employee Application...'
+                sh '''
+                    cd employee
+                    docker build \
+                        -t ${APP_NAME}:${BUILD_VERSION} \
+                        -t ${APP_NAME}:latest \
+                        -f Dockerfile .
+                '''
+            }
+        }
+        
+        stage('Start Application') {
+            steps {
+                echo '🚀 Starting Employee App for API/E2E Testing...'
+                sh '''
+                    # Stop any existing container
+                    docker stop ${APP_NAME}-test || true
+                    docker rm ${APP_NAME}-test || true
+                    
+                    # Start the container
+                    docker run -d \
+                        --name ${APP_NAME}-test \
+                        -p ${APP_PORT}:${APP_PORT} \
+                        -v expense-data:/data \
+                        ${APP_NAME}:${BUILD_VERSION}
+                    
+                    # Wait for app to be healthy
+                    echo "Waiting for application to start..."
+                    sleep 15
+                    curl -f http://localhost:${APP_PORT}/health || exit 1
+                    echo "✅ Application is ready!"
+                '''
             }
         }
     }
