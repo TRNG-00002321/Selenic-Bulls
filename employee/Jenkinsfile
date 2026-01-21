@@ -178,12 +178,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '🐍 Building Python Employee Application...'
-                sh 'echo $PATH'
-                sh 'which docker'
-                sh 'which docker-compose'
                 sh '''
-                    cd employee
-                    docker compose up 
+                    docker-compose -f /var/jenkins_home/workspace/test docker compose/docker-compose.yml
                 '''
             }
         }
