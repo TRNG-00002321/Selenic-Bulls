@@ -163,6 +163,7 @@ pipeline {
             steps {
                 echo '📈 Generating Code Coverage Report...'
                 sh '''
+                    cd employee
                     pip install -r requirements.txt 
                     pip install coverage 
                     pip install pytest-cov 
