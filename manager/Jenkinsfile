@@ -19,6 +19,18 @@ pipeline {
         timeout(time: 45, unit: 'MINUTES')
     }
 
+    // ✅ ADD: skip toggles so you can skip stages from Jenkins UI
+    parameters {
+        booleanParam(name: 'SKIP_UNIT_TESTS', defaultValue: false, description: 'Skip Unit Tests stage')
+        booleanParam(name: 'SKIP_INTEGRATION_TESTS', defaultValue: false, description: 'Skip Integration Tests stage')
+        booleanParam(name: 'SKIP_API_TESTS', defaultValue: false, description: 'Skip API Tests stage')
+        booleanParam(name: 'SKIP_E2E_TESTS', defaultValue: false, description: 'Skip E2E Tests stage')
+        booleanParam(name: 'SKIP_PERFORMANCE_TESTS', defaultValue: false, description: 'Skip Performance Tests stage')
+        booleanParam(name: 'SKIP_CODE_COVERAGE', defaultValue: false, description: 'Skip Code Coverage stage')
+        booleanParam(name: 'SKIP_ALLURE', defaultValue: false, description: 'Skip Allure Report stage')
+        booleanParam(name: 'SKIP_DEPLOY', defaultValue: false, description: 'Skip Deploy to QA stage')
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -40,6 +52,7 @@ pipeline {
         // ============================================
 
         stage('Unit Tests') {
+            when { expression { !params.SKIP_UNIT_TESTS } }
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -50,7 +63,7 @@ pipeline {
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 dir('manager') {
-                    // CHANGED: unit -> unittests
+                    // ✅ CHANGED: unit -> unittests
                     sh 'mvn clean test -Dtest="**/unittests/**" -B'
                 }
             }
@@ -62,6 +75,7 @@ pipeline {
         }
 
         stage('Integration Tests') {
+            when { expression { !params.SKIP_INTEGRATION_TESTS } }
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -72,6 +86,7 @@ pipeline {
             steps {
                 echo '🔗 Running Java Integration Tests with Real Database...'
                 dir('manager') {
+                    // ✅ CHANGED: integration -> integrationtests
                     sh 'mvn test -Dtest="**/integrationtests/**" -B'
                 }
             }
@@ -81,7 +96,6 @@ pipeline {
                 }
             }
         }
-
 
         // ============================================
         // BUILD: Only after tests pass
@@ -104,12 +118,15 @@ pipeline {
         stage('Start Application') {
             steps {
                 echo '🚀 Starting Manager App for API/E2E Testing...'
-                sh '''
-                    set -e
+                // ✅ CHANGED: use bash + real retry loop + better diagnostics
+                sh '''#!/usr/bin/env bash
+                    set -euo pipefail
 
+                    # Stop any existing container
                     docker stop ${APP_NAME}-test || true
                     docker rm ${APP_NAME}-test || true
 
+                    # Start the container
                     docker run -d \
                         --name ${APP_NAME}-test \
                         -p ${APP_PORT}:${APP_PORT} \
@@ -117,36 +134,35 @@ pipeline {
                         ${APP_NAME}:${BUILD_VERSION}
 
                     echo "Waiting for application to start..."
-
-                    # Show status early
                     docker ps -a --filter "name=${APP_NAME}-test"
 
-                    # If it exited, print logs and fail immediately
-                    if [ "$(docker inspect -f '{{.State.Running}}' ${APP_NAME}-test)" != "true" ]; then
-                    echo "❌ Container is not running. Logs:"
-                    docker logs --tail 200 ${APP_NAME}-test || true
-                    exit 1
-                    fi
+                    # Wait up to 90 seconds (30 attempts x 3s)
+                    for i in $(seq 1 30); do
+                        # If it exited, print logs and fail immediately
+                        if [ "$(docker inspect -f '{{.State.Running}}' ${APP_NAME}-test)" != "true" ]; then
+                            echo "❌ Container is not running. Logs:"
+                            docker logs --tail 200 ${APP_NAME}-test || true
+                            exit 1
+                        fi
 
-                    # Try health check up to 12 times (60s)
-                    for i in {1..12}; do
-                    if curl -fsS http://localhost:${APP_PORT}/health >/dev/null; then
-                        echo "✅ Application is ready!"
-                        exit 0
-                    fi
-                    echo "⏳ Not ready yet... ($i/12)"
-                    sleep 5
+                        if curl -fsS "http://localhost:${APP_PORT}/health" >/dev/null; then
+                            echo "✅ Application is ready!"
+                            exit 0
+                        fi
+
+                        echo "⏳ Not ready yet... (${i}/30)"
+                        sleep 3
                     done
 
-                    echo "❌ Health check failed. Container logs:"
+                    echo "❌ Health check failed after retries. Container logs:"
                     docker logs --tail 200 ${APP_NAME}-test || true
                     exit 1
                 '''
-                }
+            }
         }
 
-
         stage('API Tests') {
+            when { expression { !params.SKIP_API_TESTS } }
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -168,6 +184,7 @@ pipeline {
         }
 
         stage('E2E Tests') {
+            when { expression { !params.SKIP_E2E_TESTS } }
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -189,6 +206,7 @@ pipeline {
         }
 
         stage('Performance Tests') {
+            when { expression { !params.SKIP_PERFORMANCE_TESTS } }
             steps {
                 echo '⚡ Running JMeter Performance Tests...'
                 script {
@@ -221,6 +239,7 @@ pipeline {
         }
 
         stage('Code Coverage') {
+            when { expression { !params.SKIP_CODE_COVERAGE } }
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -259,6 +278,7 @@ pipeline {
         }
 
         stage('Generate Allure Report') {
+            when { expression { !params.SKIP_ALLURE } }
             steps {
                 echo '📊 Generating Allure Report...'
             }
@@ -275,6 +295,7 @@ pipeline {
         stage('Deploy to QA') {
             when {
                 allOf {
+                    expression { !params.SKIP_DEPLOY }
                     branch 'main'
                     expression { currentBuild.currentResult == 'SUCCESS' }
                 }
