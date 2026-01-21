@@ -73,31 +73,6 @@ pipeline {
             }
         }
         
-        stage('Integration Tests') {
-            agent {
-                docker {
-                    image 'python:3.12-slim'
-                }
-            }
-            steps {
-                echo '🔗 Running Python Integration Tests with Real Database...'
-                sh '''
-                    mkdir -p allure-results test-results
-                    
-                    cd employee
-                    pip install --quiet -r requirements.txt
-                    python -m pytest tests/integration_tests/authentication/test_user_repository.py -v \
-                        --alluredir=/app/allure-results \
-                        --junitxml=/app/test-results/integration-results.xml
-                '''
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
-                }
-            }
-        }
-        
         // ============================================
         // BUILD: Only after tests pass
         // ============================================
@@ -139,23 +114,27 @@ pipeline {
         }
         
         stage('API Tests') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                }
+            }
             steps {
-                echo '🔌 Running Python API Tests (Unit + Integration)...'
+                echo '🔌 Running Python API Tests...'
                 sh '''
                     mkdir -p allure-results test-results
                     
-                    docker run --rm \
-                        --network host \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        -e API_BASE_URL=http://localhost:${APP_PORT} \
-                        -e DATABASE_PATH=/app/tests/integration/test_expense_manager.db \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               pytest tests/api -v \
-                               --alluredir=/app/allure-results \
-                               --junitxml=/app/test-results/api-results.xml" || true
+                    cd employee
+                    pip install --quiet -r requirements.txt
+                    python -m pytest tests/integration_tests -v \
+                        --alluredir=/app/allure-results \
+                        --junitxml=/app/test-results/integration-results.xml
                 '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
+                }
             }
         }
         
