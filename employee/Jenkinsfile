@@ -105,6 +105,11 @@ pipeline {
         }
         
         stage('E2E Tests') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                }
+            }
             steps {
                 echo '🌐 Running Python E2E Tests (Behave + Integration)...'
                 sh '''
