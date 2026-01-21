@@ -4,15 +4,23 @@
 pipeline {
     agent any
 
-    environment 
-    {
-    APP_NAME = 'expense-manager'
-    APP_PORT = '5001'
-    BUILD_VERSION = "${BUILD_NUMBER}"
-    
-    // Point to the manager subdirectory where pom.xml exists
-    WORKSPACE_HOST = "${env.JENKINS_HOME_HOST ?: env.JENKINS_HOME}/workspace/${env.JOB_NAME}/manager"
-}
+    environment {
+        // Application image name
+        APP_NAME = 'expense-manager'
+        APP_PORT = '5001'
+
+        // AWS EC2 deployment target
+        //EC2_HOST = credentials('ec2-deploy-host')
+        //EC2_USER = 'ec2-user'
+
+        // Build version
+        BUILD_VERSION = "${BUILD_NUMBER}"
+
+        // Docker-in-Docker: Host workspace path
+        // The manager folder is a subdirectory in the repo, so we need to work from there
+        // We'll use the workspace directly and cd into manager for operations
+        WORKSPACE_HOST = "${env.JENKINS_HOME_HOST ?: env.JENKINS_HOME}/workspace/${env.JOB_NAME}"
+    }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -45,10 +53,10 @@ pipeline {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 sh '''
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE_HOST}/manager:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn clean test \
                         -Dtest="**/unit/**" \
                         -B
@@ -56,7 +64,7 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -66,10 +74,10 @@ pipeline {
                 echo '🔗 Running Java Integration Tests with Real Database...'
                 sh '''
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE_HOST}/manager:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn test \
                         -Dtest="**/integration/**" \
                         -B
@@ -77,7 +85,7 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*Integration*.xml'
+                    junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*Integration*.xml'
                 }
             }
         }
@@ -90,6 +98,7 @@ pipeline {
             steps {
                 echo '☕ Building Java Manager Application...'
                 sh '''
+                    cd manager
                     docker build \
                         -t ${APP_NAME}:${BUILD_VERSION} \
                         -t ${APP_NAME}:latest \
@@ -128,11 +137,11 @@ pipeline {
                 sh '''
                     docker run --rm \
                         --network host \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE_HOST}/manager:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         -e API_BASE_URL=http://localhost:${APP_PORT} \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn test \
                         -Dtest="**/api/**" \
                         -Dmaven.test.failure.ignore=true \
@@ -147,11 +156,11 @@ pipeline {
                 sh '''
                     docker run --rm \
                         --network host \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE_HOST}/manager:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         -e APP_URL=http://localhost:${APP_PORT} \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn test \
                         -Dtest="**/e2e/**" \
                         -Dmaven.test.failure.ignore=true \
@@ -164,11 +173,11 @@ pipeline {
             steps {
                 echo '⚡ Running JMeter Performance Tests...'
                 sh '''
-                    if [ -d "tests/performance" ]; then
-                        mkdir -p jmeter-results
+                    if [ -d "manager/tests/performance" ]; then
+                        mkdir -p manager/jmeter-results
                         docker run --rm \
                             --network host \
-                            -v ${WORKSPACE_HOST}:/workspace \
+                            -v ${WORKSPACE_HOST}/manager:/workspace \
                             -w /workspace \
                             justb4/jmeter:latest \
                             -n \
@@ -183,7 +192,7 @@ pipeline {
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'jmeter-results/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'manager/jmeter-results/**/*', allowEmptyArchive: true
                 }
             }
         }
@@ -193,10 +202,10 @@ pipeline {
                 echo '📈 Generating JaCoCo Coverage Report...'
                 sh '''
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE_HOST}/manager:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn jacoco:report -B || true
                 '''
             }
@@ -206,7 +215,7 @@ pipeline {
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'target/site/jacoco',
+                        reportDir: 'manager/target/site/jacoco',
                         reportFiles: 'index.html',
                         reportName: 'Java Coverage Report'
                     ])
@@ -232,7 +241,7 @@ pipeline {
                 always {
                     allure([
                         includeProperties: false,
-                        results: [[path: 'target/allure-results']]
+                        results: [[path: 'manager/target/allure-results']]
                     ])
                 }
             }
@@ -297,9 +306,9 @@ EOF
             '''
 
             archiveArtifacts artifacts: '''
-                target/surefire-reports/**/*.xml,
-                target/allure-results/**/*,
-                target/site/jacoco/**/*
+                manager/target/surefire-reports/**/*.xml,
+                manager/target/allure-results/**/*,
+                manager/target/site/jacoco/**/*
             ''', allowEmptyArchive: true
         }
 
