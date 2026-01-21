@@ -99,11 +99,7 @@ pipeline {
                     docker rm ${APP_NAME}-test || true
                     
                     # Start the container
-                    docker run -d \
-                        --name ${APP_NAME}-test \
-                        -p ${APP_PORT}:${APP_PORT} \
-                        -v expense-data:/data \
-                        ${APP_NAME}:${BUILD_VERSION}
+                    docker compose up employee
                     
                     # Wait for app to be healthy
                     echo "Waiting for application to start..."
