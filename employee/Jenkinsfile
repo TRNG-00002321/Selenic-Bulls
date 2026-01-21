@@ -182,13 +182,6 @@ pipeline {
                         reportFiles: 'index.html',
                         reportName: 'Python Coverage Report'
                     ])
-                    
-                    cobertura coberturaReportFile: 'coverage.xml',
-                              conditionalCoverageTargets: '70, 0, 0',
-                              lineCoverageTargets: '80, 0, 0',
-                              failUnhealthy: false,
-                              failUnstable: false,
-                              onlyStable: false
                 }
             }
         }
