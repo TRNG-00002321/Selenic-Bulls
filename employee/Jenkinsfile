@@ -179,7 +179,7 @@ pipeline {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
-                    docker-compose -f /var/jenkins_home/workspace/test docker compose/docker-compose.yml
+                    docker-compose up employee-app --build -d
                 '''
             }
         }
