@@ -86,7 +86,7 @@ pipeline {
 
                     cd employee
                     pip install --quiet -r requirements.txt
-                    & python main.py &  # Start the app in the background
+                    python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
                         --alluredir=/app/allure-results \
