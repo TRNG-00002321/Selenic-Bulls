@@ -50,7 +50,8 @@ pipeline {
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 dir('manager') {
-                    sh 'mvn clean test -Dtest="**/unit/**" -B'
+                    // CHANGED: unit -> unittests
+                    sh 'mvn clean test -Dtest="**/unittests/**" -B'
                 }
             }
             post {
