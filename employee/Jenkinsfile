@@ -155,18 +155,20 @@ pipeline {
         }
         
         stage('Code Coverage') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                }
+            }
             steps {
                 echo '📈 Generating Code Coverage Report...'
                 sh '''
-                    docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               pip install coverage && \
-                               coverage run -m pytest tests/unit_tests && \
-                               coverage xml -o coverage.xml && \
-                               coverage html -d htmlcov" || true
+                    pip install -r requirements.txt 
+                    pip install coverage 
+                    pip install pytest-cov 
+                    coverage run -m pytest tests/unit_tests 
+                    coverage xml -o coverage.xml
+                    coverage html -d htmlcov
                 '''
             }
             post {
