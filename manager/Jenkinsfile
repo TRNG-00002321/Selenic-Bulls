@@ -9,10 +9,6 @@ pipeline {
         APP_NAME = 'expense-manager'
         APP_PORT = '5001'
 
-        // AWS EC2 deployment target
-        //EC2_HOST = credentials('ec2-deploy-host')
-        //EC2_USER = 'ec2-user'
-
         // Build version
         BUILD_VERSION = "${BUILD_NUMBER}"
     }
@@ -44,19 +40,18 @@ pipeline {
         // ============================================
 
         stage('Unit Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v maven-repo:/root/.m2'
+                    reuseNode true
+                }
+            }
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
-                sh '''
-                    cd manager
-                    docker run --rm \
-                        -v $(pwd):/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        maven:3.9-eclipse-temurin-21 \
-                        mvn clean test \
-                        -Dtest="**/unit/**" \
-                        -B
-                '''
+                dir('manager') {
+                    sh 'mvn clean test -Dtest="**/unit/**" -B'
+                }
             }
             post {
                 always {
@@ -66,19 +61,18 @@ pipeline {
         }
 
         stage('Integration Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v maven-repo:/root/.m2'
+                    reuseNode true
+                }
+            }
             steps {
                 echo '🔗 Running Java Integration Tests with Real Database...'
-                sh '''
-                    cd manager
-                    docker run --rm \
-                        -v $(pwd):/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        maven:3.9-eclipse-temurin-21 \
-                        mvn test \
-                        -Dtest="**/integration/**" \
-                        -B
-                '''
+                dir('manager') {
+                    sh 'mvn test -Dtest="**/integration/**" -B'
+                }
             }
             post {
                 always {
@@ -94,13 +88,14 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '☕ Building Java Manager Application...'
-                sh '''
-                    cd manager
-                    docker build \
-                        -t ${APP_NAME}:${BUILD_VERSION} \
-                        -t ${APP_NAME}:latest \
-                        -f Dockerfile .
-                '''
+                dir('manager') {
+                    sh '''
+                        docker build \
+                            -t ${APP_NAME}:${BUILD_VERSION} \
+                            -t ${APP_NAME}:latest \
+                            -f Dockerfile .
+                    '''
+                }
             }
         }
 
@@ -129,66 +124,71 @@ pipeline {
         }
 
         stage('API Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v maven-repo:/root/.m2 --network host'
+                    reuseNode true
+                }
+            }
             steps {
                 echo '🔌 Running Java API Tests (REST Assured + Integration)...'
-                sh '''
-                    cd manager
-                    docker run --rm \
-                        --network host \
-                        -v $(pwd):/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        -e API_BASE_URL=http://localhost:${APP_PORT} \
-                        maven:3.9-eclipse-temurin-21 \
+                dir('manager') {
+                    sh '''
                         mvn test \
-                        -Dtest="**/api/**" \
-                        -Dmaven.test.failure.ignore=true \
-                        -B
-                '''
+                            -Dtest="**/api/**" \
+                            -Dmaven.test.failure.ignore=true \
+                            -B
+                    '''
+                }
             }
         }
 
         stage('E2E Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v maven-repo:/root/.m2 --network host'
+                    reuseNode true
+                }
+            }
             steps {
                 echo '🌐 Running Java E2E Tests (Cucumber + Integration)...'
-                sh '''
-                    cd manager
-                    docker run --rm \
-                        --network host \
-                        -v $(pwd):/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        -e APP_URL=http://localhost:${APP_PORT} \
-                        maven:3.9-eclipse-temurin-21 \
+                dir('manager') {
+                    sh '''
                         mvn test \
-                        -Dtest="**/e2e/**" \
-                        -Dmaven.test.failure.ignore=true \
-                        -B
-                '''
+                            -Dtest="**/e2e/**" \
+                            -Dmaven.test.failure.ignore=true \
+                            -B
+                    '''
+                }
             }
         }
 
         stage('Performance Tests') {
             steps {
                 echo '⚡ Running JMeter Performance Tests...'
-                sh '''
-                    if [ -d "manager/tests/performance" ]; then
-                        mkdir -p manager/jmeter-results
-                        cd manager
-                        docker run --rm \
-                            --network host \
-                            -v $(pwd):/workspace \
-                            -w /workspace \
-                            justb4/jmeter:latest \
-                            -n \
-                            -t /workspace/tests/performance/*.jmx \
-                            -l /workspace/jmeter-results/results.jtl \
-                            -e \
-                            -o /workspace/jmeter-results/report || true
-                    else
+                script {
+                    if (fileExists('manager/tests/performance')) {
+                        dir('manager') {
+                            sh '''
+                                mkdir -p jmeter-results
+                                docker run --rm \
+                                    --network host \
+                                    -v $(pwd):/workspace \
+                                    -w /workspace \
+                                    justb4/jmeter:latest \
+                                    -n \
+                                    -t /workspace/tests/performance/*.jmx \
+                                    -l /workspace/jmeter-results/results.jtl \
+                                    -e \
+                                    -o /workspace/jmeter-results/report || true
+                            '''
+                        }
+                    } else {
                         echo "No JMeter test files found, skipping..."
-                    fi
-                '''
+                    }
+                }
             }
             post {
                 always {
@@ -198,17 +198,18 @@ pipeline {
         }
 
         stage('Code Coverage') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args '-v maven-repo:/root/.m2'
+                    reuseNode true
+                }
+            }
             steps {
                 echo '📈 Generating JaCoCo Coverage Report...'
-                sh '''
-                    cd manager
-                    docker run --rm \
-                        -v $(pwd):/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        maven:3.9-eclipse-temurin-21 \
-                        mvn jacoco:report -B || true
-                '''
+                dir('manager') {
+                    sh 'mvn jacoco:report -B || true'
+                }
             }
             post {
                 always {
