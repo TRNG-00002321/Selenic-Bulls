@@ -3,6 +3,10 @@
 
 pipeline {
     agent any
+
+    parameters {
+        choice(name: 'BROWSER', choices:['chrome', 'firefox', 'edge'], description: 'Web Browser')
+    }
     
     environment {
         // Application image name
@@ -57,9 +61,9 @@ pipeline {
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
+                    cd employee
                     mkdir -p allure-results test-results
                     
-                    cd employee
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
                         --alluredir=allure-results \
@@ -82,9 +86,9 @@ pipeline {
             steps {
                 echo '🔌 Running Python API Tests...'
                 sh '''
+                    cd employee
                     mkdir -p allure-results test-results
 
-                    cd employee
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
@@ -104,32 +108,15 @@ pipeline {
             steps {
                 echo '🌐 Running Python E2E Tests (Behave + Integration)...'
                 sh '''
+                    cd employee
                     mkdir -p allure-results test-results
-                    
-                    # Run E2E integration tests first
-                    docker run --rm \
-                        --network host \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        -e APP_URL=http://localhost:${APP_PORT} \
-                        -e DATABASE_PATH=/app/tests/integration/test_expense_manager.db \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               pytest tests/e2e/test_e2e_integration_20241229.py -v \
-                               --alluredir=/app/allure-results \
-                               --junitxml=/app/test-results/e2e-integration-results.xml" || true
+
+                    # Start the application
+                    pip install --quiet -r requirements.txt
+                    # TODO: pip install browsers
                     
                     # Run Behave tests
-                    docker run --rm \
-                        --network host \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        -e APP_URL=http://localhost:${APP_PORT} \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               behave tests/e2e/features \
-                               -f allure_behave.formatter:AllureFormatter \
-                               -o /app/allure-results" || true
+                    behave -D browser=${params.BROWSER} ./tests/system_tests/selenium/features
                 '''
             }
         }
