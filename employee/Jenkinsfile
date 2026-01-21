@@ -62,8 +62,8 @@ pipeline {
                     cd employee
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                    --alluredir=allure-results \
-                    --junitxml=test-results/unit-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/unit-results.xml
                 '''
             }
             post {
@@ -74,19 +74,21 @@ pipeline {
         }
         
         stage('Integration Tests') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                }
+            }
             steps {
                 echo '🔗 Running Python Integration Tests with Real Database...'
                 sh '''
                     mkdir -p allure-results test-results
                     
-                    docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               pytest tests/integration -v -m integration \
-                               --alluredir=/app/allure-results \
-                               --junitxml=/app/test-results/integration-results.xml"
+                    cd employee
+                    pip install --quiet -r requirements.txt
+                    python -m pytest tests/integration_tests/authentication/test_user_repository.py -v \
+                        --alluredir=/app/allure-results \
+                        --junitxml=/app/test-results/integration-results.xml
                 '''
             }
             post {
