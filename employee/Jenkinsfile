@@ -186,16 +186,6 @@ pipeline {
             }
         }
         
-        stage('Stop Test Container') {
-            steps {
-                echo '🛑 Stopping test container...'
-                sh '''
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-                '''
-            }
-        }
-        
         stage('Generate Allure Report') {
             steps {
                 echo '📊 Generating Allure Report...'
@@ -207,6 +197,22 @@ pipeline {
                         results: [[path: 'allure-results']]
                     ])
                 }
+            }
+        }
+
+        // ============================================
+        // BUILD: Only after tests pass
+        // ============================================
+        stage('Build Docker Image') {
+            steps {
+                echo '🐍 Building Python Employee Application...'
+                sh 'echo $PATH'
+                sh 'which docker'
+                sh 'which docker-compose'
+                sh '''
+                    cd employee
+                    docker compose up 
+                '''
             }
         }
         
@@ -250,54 +256,11 @@ pipeline {
                             
                             sleep 15
                             curl -f http://localhost:5000/health && echo "✅ Employee app deployed!"
-EOF
-                        
                         rm ${APP_NAME}.tar.gz
                     '''
                 }
             }
-        }
-
-         // ============================================
-        // BUILD: Only after tests pass
-        // ============================================
-        
-        stage('Build Docker Image') {
-            steps {
-                echo '🐍 Building Python Employee Application...'
-                sh '''
-                    cd employee
-                    docker build \
-                        -t ${APP_NAME}:${BUILD_VERSION} \
-                        -t ${APP_NAME}:latest \
-                        -f Dockerfile .
-                '''
-            }
-        }
-        
-        stage('Start Application') {
-            steps {
-                echo '🚀 Starting Employee App for API/E2E Testing...'
-                sh '''
-                    # Stop any existing container
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-                    
-                    # Start the container
-                    docker run -d \
-                        --name ${APP_NAME}-test \
-                        -p ${APP_PORT}:${APP_PORT} \
-                        -v expense-data:/data \
-                        ${APP_NAME}:${BUILD_VERSION}
-                    
-                    # Wait for app to be healthy
-                    echo "Waiting for application to start..."
-                    sleep 15
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
-                    echo "✅ Application is ready!"
-                '''
-            }
-        }
+        }        
     }
     
     post {
