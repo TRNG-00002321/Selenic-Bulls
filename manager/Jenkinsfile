@@ -55,7 +55,7 @@ pipeline {
                     docker run --rm \
                         -v ${WORKSPACE_HOST}:/app \
                         -v maven-repo:/root/.m2 \
-                        -w /app \
+                        -w /workspace/manager-app-pipeline \
                         maven:3.9-eclipse-temurin-17 \
                         mvn clean test \
                         -Dtest="**/unit/**" \
