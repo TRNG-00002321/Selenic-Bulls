@@ -179,7 +179,7 @@ pipeline {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
-                    docker-compose up employee-app --build -d
+                    docker-compose up employee-app -d
                 '''
             }
         }
