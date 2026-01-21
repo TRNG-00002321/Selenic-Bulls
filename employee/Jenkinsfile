@@ -81,6 +81,7 @@ pipeline {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
+                    cd employee
                     docker build \
                         -t ${APP_NAME}:${BUILD_VERSION} \
                         -t ${APP_NAME}:latest \
