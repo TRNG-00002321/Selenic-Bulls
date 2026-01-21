@@ -105,25 +105,46 @@ pipeline {
             steps {
                 echo '🚀 Starting Manager App for API/E2E Testing...'
                 sh '''
-                    # Stop any existing container
+                    set -e
+
                     docker stop ${APP_NAME}-test || true
                     docker rm ${APP_NAME}-test || true
 
-                    # Start the container
                     docker run -d \
                         --name ${APP_NAME}-test \
                         -p ${APP_PORT}:${APP_PORT} \
                         -v expense-data:/data \
                         ${APP_NAME}:${BUILD_VERSION}
 
-                    # Wait for app to be healthy
                     echo "Waiting for application to start..."
-                    sleep 30
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
-                    echo "✅ Application is ready!"
+
+                    # Show status early
+                    docker ps -a --filter "name=${APP_NAME}-test"
+
+                    # If it exited, print logs and fail immediately
+                    if [ "$(docker inspect -f '{{.State.Running}}' ${APP_NAME}-test)" != "true" ]; then
+                    echo "❌ Container is not running. Logs:"
+                    docker logs --tail 200 ${APP_NAME}-test || true
+                    exit 1
+                    fi
+
+                    # Try health check up to 12 times (60s)
+                    for i in {1..12}; do
+                    if curl -fsS http://localhost:${APP_PORT}/health >/dev/null; then
+                        echo "✅ Application is ready!"
+                        exit 0
+                    fi
+                    echo "⏳ Not ready yet... ($i/12)"
+                    sleep 5
+                    done
+
+                    echo "❌ Health check failed. Container logs:"
+                    docker logs --tail 200 ${APP_NAME}-test || true
+                    exit 1
                 '''
-            }
+                }
         }
+
 
         stage('API Tests') {
             agent {
