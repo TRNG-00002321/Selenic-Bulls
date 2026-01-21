@@ -103,49 +103,15 @@ pipeline {
                 }
             }
         }
-
-        stage('E2E Setup') {
-            agent {
-                docker {
-                    image 'python:3.12-slim'
-                }
+        
+        stage('Parallel E2E Tests') {
+            parallel {
+                stage('Chrome E2E Tests') {}
+                stage('Firefox E2E Tests') {}
+                stage('Edge E2E Tests') {}
             }
             steps {
-                sh '''
-                    # Update package lists and install basic dependencies
-                    sudo apt-get update -y
-                    sudo apt-get install -y wget curl gnupg apt-transport-https ca-certificates software-properties-common
-        
-                    # Install Google Chrome
-                    wget -q -O - https://dl-ssl.google.com | sudo apt-key add -
-                    sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-                    sudo apt-get update -y
-                    sudo apt-get install -y google-chrome-stable
-        
-                    # Install Mozilla Firefox (usually pre-installed or in default repos)
-                    sudo apt-get install -y firefox
-        
-                    # Install Microsoft Edge
-                    curl https://packages.microsoft.com | sudo gpg --dearmor > microsoft.gpg
-                    sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
-                    sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
-                    sudo rm microsoft.gpg
-                    sudo apt-get update -y
-                    sudo apt-get install -y microsoft-edge-stable
-        
-                    echo "Browsers installed successfully."
-                '''
-            }
-        }
-        
-        stage('E2E Tests') {
-            agent {
-                docker {
-                    image 'python:3.12-slim'
-                }
-            }
-            steps {
-                echo '🌐 Running Python E2E Tests (Behave + Integration)...'
+                echo '🌐 Running Python E2E Tests in ${params.BROWSER} (Behave + Selenium)...'
                 sh '''
                     cd employee
                     mkdir -p allure-results test-results
@@ -154,8 +120,6 @@ pipeline {
                     pip install --quiet -r requirements.txt
                     python main.py &
                     sleep 10 
-                    
-                    # TODO: pip install browsers
                     
                     # Run Behave tests
                     behave -D browser=${params.BROWSER} ./tests/system_tests/selenium/features
