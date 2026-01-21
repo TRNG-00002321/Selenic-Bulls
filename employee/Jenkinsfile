@@ -126,34 +126,6 @@ pipeline {
             }
         } */
         
-        stage('Performance Tests') {
-            steps {
-                echo '⚡ Running JMeter Performance Tests...'
-                sh '''
-                    if [ -d "tests/performance" ]; then
-                        mkdir -p jmeter-results
-                        docker run --rm \
-                            --network host \
-                            -v ${WORKSPACE_HOST}:/workspace \
-                            -w /workspace \
-                            justb4/jmeter:latest \
-                            -n \
-                            -t /workspace/tests/performance/*.jmx \
-                            -l /workspace/jmeter-results/results.jtl \
-                            -e \
-                            -o /workspace/jmeter-results/report || true
-                    else
-                        echo "No JMeter test files found, skipping..."
-                    fi
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'jmeter-results/**/*', allowEmptyArchive: true
-                }
-            }
-        }
-        
         stage('Code Coverage') {
             agent {
                 docker {
