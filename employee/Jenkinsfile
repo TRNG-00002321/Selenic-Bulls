@@ -67,44 +67,45 @@ pipeline {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p allure-results test-results
+                    mkdir -p test-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=allure-results \
+                        --alluredir=/employee/allure-results \
                         --junitxml=test-results/unit-results.xml
                 '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'test-results/*.xml'
+                    junit allowEmptyResults: true, testResults: 'employee/test-results/*.xml'
                 }
             }
         }
         
-        /*stage('API Tests') {
+        stage('API Tests') {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p allure-results test-results
+                    mkdir -p test-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/app/allure-results \
-                        --junitxml=/app/test-results/integration-results.xml
+                        --alluredir=/employee/allure-results \
+                        --junitxml=/employee/test-results/integration-results.xml
                 '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
+                    junit allowEmptyResults: true, testResults: 'employee/test-results/integration-results.xml'
                 }
             }
         }
@@ -116,7 +117,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                     when {
@@ -146,7 +147,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -176,7 +177,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -228,23 +229,9 @@ pipeline {
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'htmlcov',
+                        reportDir: 'employee/htmlcov',
                         reportFiles: 'index.html',
                         reportName: 'Python Coverage Report'
-                    ])
-                }
-            }
-        }
-        
-        stage('Generate Allure Report') {
-            steps {
-                echo '📊 Generating Allure Report...'
-            }
-            post {
-                always {
-                    allure([
-                        includeProperties: false,
-                        results: [[path: 'allure-results']]
                     ])
                 }
             }
@@ -263,11 +250,17 @@ pipeline {
                     docker-compose up -d --build employee-app
                 '''
             }
-        } */
+        }
     }
     
     post {
         always {
+            echo '📊 Generating Allure Report...'
+            allure([
+                        includeProperties: false,
+                        results: [[path: 'employee/allure-results']]
+                    ])
+            
             echo '🧹 Cleaning up...'
             sh '''
                 docker stop ${APP_NAME}-test || true
@@ -276,9 +269,9 @@ pipeline {
             '''
             
             archiveArtifacts artifacts: '''
-                test-results/**/*.xml,
-                allure-results/**/*,
-                htmlcov/**/*
+                employee/test-results/**/*.xml,
+                employee/allure-results/**/*,
+                employee/htmlcov/**/*
             ''', allowEmptyArchive: true
         }
         
