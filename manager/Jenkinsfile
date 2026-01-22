@@ -279,7 +279,7 @@ pipeline {
         sh '''
           set -e
 
-          # Sanity: app container must be able to reach selenium container by name
+          # ✅ From inside the app container, selenium should be reachable
           docker exec ${APP_NAME}-test sh -lc "wget -qO- http://${SELENIUM_CONTAINER}:4444/wd/hub/status | head -c 200"
 
           docker exec ${APP_NAME}-test sh -lc '
@@ -287,7 +287,8 @@ pipeline {
             cd '"${CONTAINER_WS}"'/manager
             rm -rf target || true
 
-            export BASE_URL="http://localhost:'"${APP_PORT}"'"
+            # ✅ IMPORTANT: browser runs in selenium container, so baseUrl must be the APP CONTAINER NAME
+            export BASE_URL="http://'${APP_NAME}'-test:'"${APP_PORT}"'"
 
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
