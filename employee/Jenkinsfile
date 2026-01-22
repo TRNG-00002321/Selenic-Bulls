@@ -114,6 +114,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'employee/Dockerfile.chrome'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
