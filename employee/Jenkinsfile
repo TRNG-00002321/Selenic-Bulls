@@ -60,7 +60,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/allure-results'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
@@ -86,7 +86,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/allure-results'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
@@ -209,6 +209,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/htmlcov:/employee/htmlcov'
                 }
             }
             steps {
@@ -229,7 +230,7 @@ pipeline {
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'employee/htmlcov',
+                        reportDir: 'htmlcov',
                         reportFiles: 'index.html',
                         reportName: 'Python Coverage Report'
                     ])
