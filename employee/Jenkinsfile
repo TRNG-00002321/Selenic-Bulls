@@ -236,6 +236,7 @@ pipeline {
         }
         
         stage('Generate Allure Report') {
+            agent any
             steps {
                 echo '📊 Generating Allure Report...'
             }
@@ -243,7 +244,7 @@ pipeline {
                 always {
                     allure([
                         includeProperties: false,
-                        results: [[path: 'allure-results']]
+                        results: [[path: 'employee/allure-results']]
                     ])
                 }
             }
@@ -267,6 +268,11 @@ pipeline {
     
     post {
         always {
+            allure([
+                        includeProperties: false,
+                        results: [[path: 'employee/allure-results']]
+                    ])
+
             echo '🧹 Cleaning up...'
             sh '''
                 docker stop ${APP_NAME}-test || true
@@ -275,9 +281,9 @@ pipeline {
             '''
             
             archiveArtifacts artifacts: '''
-                test-results/**/*.xml,
-                allure-results/**/*,
-                htmlcov/**/*
+                employee/test-results/**/*.xml,
+                employee/allure-results/**/*,
+                employee/htmlcov/**/*
             ''', allowEmptyArchive: true
         }
         
