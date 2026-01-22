@@ -55,7 +55,7 @@ pipeline {
         stage('Unit Tests') {
             agent {
                 docker {
-                    image 'maven:3.9-eclipse-temurin-17'
+                    image 'maven:3.9-eclipse-temurin-21'
                     args  '-v maven-repo:/root/.m2 -v ${WORKSPACE_HOST}:/app -w /app'
                 }
             }
@@ -76,7 +76,7 @@ pipeline {
         stage('API Integration Tests') {
             agent {
                 docker {
-                    image 'maven:3.9-eclipse-temurin-17'
+                    image 'maven:3.9-eclipse-temurin-21'
                     args  '-v maven-repo:/root/.m2 -v ${WORKSPACE_HOST}:/app -w /app'
                 }
             }
@@ -109,7 +109,7 @@ pipeline {
                         -v maven-repo:/root/.m2 \
                         -w /app \
                         -e APP_URL=http://localhost:${APP_PORT} \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn test \
                         -Dtest="**/e2e/**" \
                         -Dmaven.test.failure.ignore=true \
@@ -154,7 +154,7 @@ pipeline {
                         -v ${WORKSPACE_HOST}:/app \
                         -v maven-repo:/root/.m2 \
                         -w /app \
-                        maven:3.9-eclipse-temurin-17 \
+                        maven:3.9-eclipse-temurin-21 \
                         mvn jacoco:report -B || true
                 '''
             }
