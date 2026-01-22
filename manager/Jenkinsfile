@@ -197,7 +197,7 @@ pipeline {
         }
       }
     }
-    
+
     stage('Start Selenium Grid') {
       when { expression { !params.SKIP_E2E_TESTS } }
       steps {
