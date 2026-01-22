@@ -253,13 +253,15 @@ pipeline {
             -e OTEL_LOGS_EXPORTER=none \
             "${SELENIUM_IMAGE}"
 
-          echo "Waiting for Selenium..."
-          for i in $(seq 1 30); do
-            if docker exec "${SELENIUM_CONTAINER}" sh -lc "wget -qO- http://localhost:4444/status | grep -q '\\"ready\\":true'"; then
-              echo "✅ Selenium is ready!"
+          echo "Waiting for Selenium (checking /wd/hub/status)..."
+          for i in $(seq 1 45); do
+            if docker exec "${SELENIUM_CONTAINER}" sh -lc "wget -q --spider http://localhost:4444/wd/hub/status"; then
+              echo "✅ Selenium is responding on /wd/hub/status"
+              echo "Status snippet:"
+              docker exec "${SELENIUM_CONTAINER}" sh -lc "wget -qO- http://localhost:4444/wd/hub/status | head -c 300" || true
               exit 0
             fi
-            echo "⏳ Not ready yet (${i}/30)..."
+            echo "⏳ Not ready yet (${i}/45)..."
             sleep 2
           done
 
@@ -276,6 +278,10 @@ pipeline {
         echo "🧭 Running Selenium E2E (Chrome) via RemoteWebDriver..."
         sh '''
           set -e
+
+          # Sanity: app container must be able to reach selenium container by name
+          docker exec ${APP_NAME}-test sh -lc "wget -qO- http://${SELENIUM_CONTAINER}:4444/wd/hub/status | head -c 200"
+
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
