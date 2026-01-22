@@ -94,7 +94,6 @@ pipeline {
                 dir ('employee') {
                     echo '🔌 Running Python API Tests...'
                     sh '''
-                        cd employee
                         mkdir -p test-results allure-results
 
                         pip install --quiet -r requirements.txt
