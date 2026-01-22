@@ -6,12 +6,20 @@ pipeline {
     APP_PORT      = '5001'
     BUILD_VERSION = "${BUILD_NUMBER}"
     APP_URL       = "http://localhost:${APP_PORT}"
+
     TEST_NETWORK  = "jenkins-test-network"
 
-    // Writable path inside container
+    // Inside-container workspace for running mvn (writable for appuser)
     CONTAINER_WS  = "/home/appuser/workspace"
     CONTAINER_UID = "1001"
     CONTAINER_GID = "1001"
+
+    // ✅ Path in your repo where you commit the seeded DB file
+    // Put your uploaded db here: manager/seed/expense_manager.db
+    SEED_DB_PATH  = "manager/seed/expense_manager.db"
+
+    // Docker volume used by app for /data
+    DB_VOLUME     = "expense-data"
   }
 
   options {
@@ -46,6 +54,8 @@ pipeline {
           ls -la
           echo "Manager dir on Jenkins node:"
           ls -la manager || true
+          echo "Seed DB file check:"
+          ls -la "${SEED_DB_PATH}" || true
         '''
       }
     }
@@ -79,11 +89,13 @@ pipeline {
           sh '''
             set -e
 
+            # Build production/runtime image (default final stage)
             docker build \
               -t ${APP_NAME}:${BUILD_VERSION} \
               -t ${APP_NAME}:latest \
               -f Dockerfile .
 
+            # Build test-enabled image (target testrunner)
             docker build \
               --target testrunner \
               -t ${APP_NAME}-testrunner:${BUILD_VERSION} \
@@ -93,6 +105,7 @@ pipeline {
       }
     }
 
+    // ✅ Start app with a SEEDED DB in the expense-data volume
     stage('Start Application') {
       steps {
         echo '🚀 Starting Manager App (testrunner image) for API Testing...'
@@ -104,14 +117,33 @@ pipeline {
           docker stop ${APP_NAME}-test >/dev/null 2>&1 || true
           docker rm ${APP_NAME}-test >/dev/null 2>&1 || true
 
-          docker volume rm expense-data >/dev/null 2>&1 || true
-          docker volume create expense-data >/dev/null
+          # Fresh DB every run (clean state) — then seed it
+          docker volume rm ${DB_VOLUME} >/dev/null 2>&1 || true
+          docker volume create ${DB_VOLUME} >/dev/null
 
+          echo "🌱 Seeding DB volume with ${SEED_DB_PATH} ..."
+
+          # Ensure seed DB exists in workspace
+          test -f "${SEED_DB_PATH}"
+
+          # Helper container that mounts the volume so we can copy db into it
+          docker rm -f seed-helper >/dev/null 2>&1 || true
+          docker create --name seed-helper -v ${DB_VOLUME}:/data alpine:3.20 >/dev/null
+
+          # Copy seeded DB into /data inside the mounted volume
+          docker cp "${SEED_DB_PATH}" seed-helper:/data/expense_manager.db
+
+          # Ensure appuser (1001) can read/write it
+          docker start seed-helper >/dev/null
+          docker exec -u 0 seed-helper sh -lc "chown ${CONTAINER_UID}:${CONTAINER_GID} /data/expense_manager.db && chmod 664 /data/expense_manager.db"
+          docker rm -f seed-helper >/dev/null
+
+          # Start app container using the seeded volume
           docker run -d \
             --name ${APP_NAME}-test \
             --network ${TEST_NETWORK} \
             -p ${APP_PORT}:${APP_PORT} \
-            -v expense-data:/data \
+            -v ${DB_VOLUME}:/data \
             ${APP_NAME}-testrunner:${BUILD_VERSION}
 
           echo "Waiting for application health (inside container)..."
@@ -132,7 +164,7 @@ pipeline {
       }
     }
 
-    // ✅ Copy repo into container in a way appuser can write /target
+    // ✅ Copy repo into container (for mvn + tests) and chown so appuser can write target/
     stage('Sync Repo Into App Container') {
       when { expression { !params.SKIP_API_TESTS } }
       steps {
@@ -140,16 +172,15 @@ pipeline {
         sh '''
           set -e
 
-          # 1) Prepare dirs as ROOT (so we can chown safely)
           docker exec -u 0 ${APP_NAME}-test sh -lc "
             rm -rf ${CONTAINER_WS} /tmp/repo &&
             mkdir -p ${CONTAINER_WS} /tmp/repo
           "
 
-          # 2) Copy repo from Jenkins node -> /tmp/repo (likely root-owned)
+          # Copy repo from Jenkins node -> /tmp/repo (root-owned is fine)
           docker cp . ${APP_NAME}-test:/tmp/repo
 
-          # 3) Move into final location and chown to appuser
+          # Move into final location and chown to appuser
           docker exec -u 0 ${APP_NAME}-test sh -lc "
             rm -rf ${CONTAINER_WS}/* &&
             cp -R /tmp/repo/. ${CONTAINER_WS}/ &&
@@ -157,17 +188,10 @@ pipeline {
             rm -rf /tmp/repo
           "
 
-          echo "---- Verify copy + ownership ----"
+          echo "---- Verify repo copy ----"
           docker exec ${APP_NAME}-test sh -lc "id && ls -la ${CONTAINER_WS} | head -n 50"
           docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS}/manager | head -n 50"
           docker exec ${APP_NAME}-test sh -lc "test -f ${CONTAINER_WS}/manager/pom.xml && echo '✅ pom.xml present' || (echo '❌ pom.xml missing' && exit 1)"
-
-          # Ensure target dir is writable (prevents resources plugin failure)
-          docker exec ${APP_NAME}-test sh -lc "
-            mkdir -p ${CONTAINER_WS}/manager/target &&
-            touch ${CONTAINER_WS}/manager/target/.write_test &&
-            rm -f ${CONTAINER_WS}/manager/target/.write_test
-          "
         '''
       }
     }
@@ -181,11 +205,14 @@ pipeline {
 
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
 
+          # Optional: quick sanity check that DB is present in /data
+          docker exec ${APP_NAME}-test sh -lc "ls -la /data || true; test -f /data/expense_manager.db && echo '✅ DB present in /data'"
+
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
 
-            # Clean target to remove any root-owned leftovers if any
+            # Ensure clean build outputs
             rm -rf target || true
 
             mvn -B clean test \
@@ -202,6 +229,9 @@ pipeline {
         }
       }
     }
+
+    // (Optional) Keep your other stages as-is or re-add them here if you want.
+    // I’m leaving E2E, performance, coverage, allure, deploy toggles intact in post/actions below.
 
     stage('Stop Test Container') {
       steps {
@@ -238,7 +268,7 @@ pipeline {
       }
       steps {
         echo '🚀 All tests passed! Deploying Manager App to QA...'
-        // keep your deploy logic
+        // keep your deploy logic here
       }
     }
   }
