@@ -93,14 +93,20 @@ pipeline {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p test-results
+                    mkdir -p test-results allure-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
+                    APP_PID=$!
                     sleep 10 # Wait for app to be ready
+                    
+                    # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/employee/allure-results \
-                        --junitxml=/employee/test-results/integration-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/integration-results.xml
+                    
+                    # Kill the background app process
+                    kill $APP_PID || true
                 '''
             }
             post {
