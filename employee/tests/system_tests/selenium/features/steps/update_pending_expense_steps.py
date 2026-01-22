@@ -24,7 +24,7 @@ def step_click_edit_button(context, description, status):
     assert data_cells[3].text.lower() == status.lower(), "Status of the expense does not match"
     
     edit_button = context.wait.until(
-        EC.element_to_be_clickable(("xpath", "//button[normalize-space()='Edit']"))
+        EC.visibility_of_element_located(("xpath", "//button[normalize-space()='Edit']"))
     )
     edit_button.click()
 

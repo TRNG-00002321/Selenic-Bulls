@@ -108,32 +108,32 @@ def step_leave_field_empty(context, field):
     
     if field == "amount":
         # Just clear the amount field
-        input_field = context.wait.until(EC.element_to_be_clickable((By.ID, field_id)))
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
     
     elif field == "description":
         # Fill amount with valid value first
-        amount_field = context.wait.until(EC.element_to_be_clickable((By.ID, "amount")))
+        amount_field = context.wait.until(EC.visibility_of_element_located((By.ID, "amount")))
         amount_field.clear()
         amount_field.send_keys("50.00")
         
         # Leave description empty
-        input_field = context.wait.until(EC.element_to_be_clickable((By.ID, field_id)))
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
     
     elif field == "date":
         # Fill amount with valid value first
-        amount_field = context.wait.until(EC.element_to_be_clickable((By.ID, "amount")))
+        amount_field = context.wait.until(EC.visibility_of_element_located((By.ID, "amount")))
         amount_field.clear()
         amount_field.send_keys("50.00")
         
         # Fill description with valid value
-        desc_field = context.wait.until(EC.element_to_be_clickable((By.ID, "description")))
+        desc_field = context.wait.until(EC.visibility_of_element_located((By.ID, "description")))
         desc_field.clear()
         desc_field.send_keys("Valid Description")
         
         # Leave date empty
-        input_field = context.wait.until(EC.element_to_be_clickable((By.ID, field_id)))
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
 
 @then('a {field} validation error message containing "{error_text}" should be displayed for submit form')
