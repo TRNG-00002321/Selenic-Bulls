@@ -67,11 +67,12 @@ pipeline {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p test-results
+                    rm -rf allure-results
+                    mkdir -p test-results allure-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=/employee/allure-results/unit-tests \
+                        --alluredir=/employee/allure-results \
                         --junitxml=test-results/unit-results.xml
                 '''
             }
@@ -93,7 +94,7 @@ pipeline {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p test-results
+                    mkdir -p test-results allure-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
@@ -102,7 +103,7 @@ pipeline {
                     
                     # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/employee/allure-results/api-tests \
+                        --alluredir=/employee/allure-results \
                         --junitxml=test-results/integration-results.xml
                     
                     # Kill the background app process
