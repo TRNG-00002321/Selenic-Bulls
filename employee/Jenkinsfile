@@ -102,7 +102,7 @@ pipeline {
                     
                     # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=allure-results \
+                        --alluredir=/employee/allure-results \
                         --junitxml=test-results/integration-results.xml
                     
                     # Kill the background app process
