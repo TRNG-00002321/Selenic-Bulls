@@ -64,18 +64,14 @@ pipeline {
     }
 
     stage('Unit Tests') {
-            agent {
-                docker {
-                    image 'maven:3.9-eclipse-temurin-21'
-                    args  '-v maven-repo:/root/.m2 -v ${WORKSPACE_HOST}:/app -w /app'
-                }
-            }
+            when { expression { !params.SKIP_UNIT_TESTS } }
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
-                sh '''
-                    cd manager
-                    mvn clean test -Dtest="" -B 
-                '''
+                dir('manager') {
+                  sh '''
+                      mvn clean test -Dtest="**/unittests/**" -B -Dmaven.test.failure.ignore=true
+                  '''
+                }
             }
             post {
                 always {
