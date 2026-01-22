@@ -71,7 +71,7 @@ pipeline {
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=/allure-results \
+                        --alluredir=/allure-results/unit \
                         --junitxml=test-results/unit-results.xml
                 '''
             }
@@ -99,7 +99,7 @@ pipeline {
                     python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/allure-results \
+                        --alluredir=/allure-results/integration \
                         --junitxml=test-results/integration-results.xml
                 '''
             }
