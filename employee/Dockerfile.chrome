@@ -16,5 +16,5 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Switch to non-root user
-USER appuser
+# Switch back to non-root user
+USER seluser
