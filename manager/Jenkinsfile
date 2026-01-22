@@ -92,6 +92,7 @@ pipeline {
                     sleep 10  # Wait for app to start
 
                     # Run API tests
+                    cd ..
                     mvn test \
                         -Dtest="**/integrationtests/**" \
                         -B
