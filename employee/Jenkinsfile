@@ -66,12 +66,12 @@ pipeline {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p allure-results test-results
+                    mkdir -p ../allure-results ../test-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=allure-results \
-                        --junitxml=test-results/unit-results.xml
+                        --alluredir=../allure-results \
+                        --junitxml=../test-results/unit-results.xml
                 '''
             }
             post {
