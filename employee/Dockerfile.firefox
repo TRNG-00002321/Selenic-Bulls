@@ -1,25 +1,25 @@
 # Jenkins Pipeline E2E Setup Stage Dockerfile
 # Custom image that includes Firefox and python:slim for E2E testing
 
-# Use the selenium/standalone-firefox image as the base
-FROM selenium/standalone-firefox:4.9.0
+FROM python:3.12-slim
 
 # Switch to root user to install system packages
 USER root
 
-# Install Python and pip
-# The package names might vary slightly depending on the base Linux distribution
-# (e.g., python3.9-slim, python3.10-slim, etc. are not standard apt packages. We install the standard python3 here).
-RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3-pip \
-    python3-venv \
-    wget \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gnupg \
+    ca-certificates \
+    unzip \
+    fonts-liberation \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libnss3 \
+    && apt-get install -y --no-install-recommends firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
 # Install project and testing dependencies
 RUN pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-RUN pip install --quiet --no-cache-dir -r requirements.txt
 
 # Switch back to non-root user
 USER appuser
