@@ -15,7 +15,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatk-bridge2.0-0 \
     libgtk-3-0 \
     libnss3 \
-    && apt-get install -y --no-install-recommends firefox-esr \
+    libasound2 \
+    libdbus-glib-1-2 \
+    libxt6 \
+    libxrender1 \
+    firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
 # Install project and testing dependencies
