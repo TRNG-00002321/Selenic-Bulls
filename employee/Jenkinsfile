@@ -130,8 +130,6 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
-                            pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-                            pip install --quiet --no-cache-dir -r requirements.txt
                             python main.py &
                             sleep 10 
                             
@@ -160,8 +158,6 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
-                            pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-                            pip install --quiet --no-cache-dir -r requirements.txt
                             python main.py &
                             sleep 10 
                             
@@ -190,8 +186,6 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
-                            pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-                            pip install --quiet --no-cache-dir -r requirements.txt
                             python main.py &
                             sleep 10 
                             
