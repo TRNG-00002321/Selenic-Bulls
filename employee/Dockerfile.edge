@@ -10,7 +10,6 @@ USER root
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
-    software-properties-common && \
     # Import the Microsoft GPG signing keys
     curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg && \
     install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/ && \
