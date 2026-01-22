@@ -22,4 +22,4 @@ RUN pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-m
 RUN pip install --quiet --no-cache-dir -r requirements.txt
 
 # Switch back to non-root user
-USER seluser
+USER appuser
