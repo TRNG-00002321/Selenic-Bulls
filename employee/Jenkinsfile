@@ -112,8 +112,10 @@ pipeline {
             parallel {
                 stage('Chrome E2E Tests') {
                     agent {
-                        docker {
-                            image 'python:3.12-slim'
+                        dockerfile {
+                            filename 'Dockerfile.build'
+                            label 'e2e-agent-image'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                     when {
@@ -141,8 +143,10 @@ pipeline {
                 }
                 stage('Firefox E2E Tests') {
                     agent {
-                        docker {
-                            image 'python:3.12-slim'
+                        dockerfile {
+                            filename 'Dockerfile.build'
+                            label 'e2e-agent-image'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -170,8 +174,10 @@ pipeline {
                 }
                 stage('Edge E2E Tests') {
                     agent {
-                        docker {
-                            image 'python:3.12-slim'
+                        dockerfile {
+                            filename 'Dockerfile.build'
+                            label 'e2e-agent-image'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
