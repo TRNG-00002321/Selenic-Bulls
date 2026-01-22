@@ -143,7 +143,8 @@ pipeline {
                 stage('Firefox E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.firefox'
+                            filename 'Dockerfile.firefox'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -160,6 +161,7 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
+                            pip install --quiet -r requirements.txt
                             python main.py &
                             sleep 10 
                             
@@ -171,7 +173,8 @@ pipeline {
                 stage('Edge E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.edge'
+                            filename 'Dockerfile.edge'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -188,6 +191,7 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
+                            pip install --quiet -r requirements.txt
                             python main.py &
                             sleep 10 
                             
