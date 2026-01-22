@@ -21,8 +21,7 @@ pipeline {
     SELENIUM_IMAGE       = "selenium/standalone-chrome:4.25.0"
     SELENIUM_REMOTE_URL  = "http://selenium-chrome:4444/wd/hub"
 
-    // ✅ Allure output folders (host workspace)
-    ALLURE_ROOT = "manager/target/allure-results"
+    // ✅ Allure results folders (split per stage to avoid clobbering)
     ALLURE_UNIT = "manager/target/allure-results/unit"
     ALLURE_API  = "manager/target/allure-results/api"
     ALLURE_E2E  = "manager/target/allure-results/e2e"
@@ -70,10 +69,6 @@ pipeline {
             echo "❌ Seed DB NOT found at ${SEED_DB_PATH}"
             exit 1
           fi
-
-          # ✅ Prepare Allure directories on host
-          rm -rf manager/target/allure-results || true
-          mkdir -p ${ALLURE_UNIT} ${ALLURE_API} ${ALLURE_E2E}
         '''
       }
     }
@@ -113,11 +108,22 @@ pipeline {
         dir('manager') {
           sh '''
             set -e
-            mvn -B clean test \
-              -Dtest="**/unittests/**" \
-              -Dallure.results.directory=target/allure-results/unit
+            rm -rf target/allure-results || true
+            mvn -B clean test -Dtest="**/unittests/**"
           '''
         }
+
+        // ✅ Copy unit allure results into a dedicated folder
+        sh '''
+          set -e
+          rm -rf "${ALLURE_UNIT}" || true
+          mkdir -p "${ALLURE_UNIT}"
+          if [ -d "manager/target/allure-results" ]; then
+            cp -R manager/target/allure-results/. "${ALLURE_UNIT}/" || true
+          fi
+          echo "---- Allure UNIT files ----"
+          ls -la "${ALLURE_UNIT}" || true
+        '''
       }
       post {
         always {
@@ -211,9 +217,15 @@ pipeline {
           set -e
 
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
-          docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db"
+          docker exec ${APP_NAME}-test sh -lc "ls -la /data || true"
+          docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db && echo '✅ DB present in /data' || (echo '❌ DB missing in /data' && exit 1)"
 
-          # Run API tests and write Allure to a stage-specific folder INSIDE container
+          # ✅ Clean allure results INSIDE the container for this stage (api)
+          docker exec ${APP_NAME}-test sh -lc "
+            rm -rf ${CONTAINER_WS}/manager/target/allure-results/api || true
+            mkdir -p ${CONTAINER_WS}/manager/target/allure-results/api
+          "
+
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
@@ -221,6 +233,9 @@ pipeline {
 
             export DATABASE_PATH=/data/expense_manager.db
             export DB_PATH=/data/expense_manager.db
+
+            # ✅ Force Allure results dir for API stage
+            export ALLURE_RESULTS_DIRECTORY=target/allure-results/api
 
             mvn -B clean test \
               -Dtest="**/integrationtests/**" \
@@ -230,13 +245,13 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy API allure-results OUT of container into Jenkins workspace
-          rm -rf ${ALLURE_API} || true
-          mkdir -p ${ALLURE_API}
-          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/api ${ALLURE_API} || true
+          # ✅ Copy API allure results OUT of container into Jenkins workspace (FLATTEN via "/.")
+          rm -rf "${ALLURE_API}" || true
+          mkdir -p "${ALLURE_API}"
+          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/api/. "${ALLURE_API}" || true
 
           echo "---- Allure API files ----"
-          ls -la ${ALLURE_API}/api || true
+          ls -la "${ALLURE_API}" || true
         '''
       }
       post {
@@ -288,14 +303,25 @@ pipeline {
         sh '''
           set -e
 
+          # ✅ Confirm selenium reachable from app container
           docker exec ${APP_NAME}-test sh -lc "wget -qO- http://${SELENIUM_CONTAINER}:4444/wd/hub/status | head -c 200"
+
+          # ✅ Clean allure results INSIDE the container for this stage (e2e)
+          docker exec ${APP_NAME}-test sh -lc "
+            rm -rf ${CONTAINER_WS}/manager/target/allure-results/e2e || true
+            mkdir -p ${CONTAINER_WS}/manager/target/allure-results/e2e
+          "
 
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
             rm -rf target || true
 
+            # IMPORTANT: browser runs in selenium container, so baseUrl must be the APP CONTAINER NAME
             export BASE_URL="http://'${APP_NAME}'-test:'"${APP_PORT}"'"
+
+            # ✅ Force Allure results dir for E2E stage
+            export ALLURE_RESULTS_DIRECTORY=target/allure-results/e2e
 
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
@@ -306,13 +332,13 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy E2E allure-results OUT of container into Jenkins workspace
-          rm -rf ${ALLURE_E2E} || true
-          mkdir -p ${ALLURE_E2E}
-          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/e2e ${ALLURE_E2E} || true
+          # ✅ Copy E2E allure results OUT of container into Jenkins workspace (FLATTEN via "/.")
+          rm -rf "${ALLURE_E2E}" || true
+          mkdir -p "${ALLURE_E2E}"
+          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/e2e/. "${ALLURE_E2E}" || true
 
           echo "---- Allure E2E files ----"
-          ls -la ${ALLURE_E2E}/e2e || true
+          ls -la "${ALLURE_E2E}" || true
         '''
       }
       post {
@@ -349,7 +375,7 @@ pipeline {
       }
       post {
         always {
-          // ✅ Publish from all stage folders
+          // ✅ Generate a single report from the 3 result roots
           allure([
             includeProperties: false,
             results: [
