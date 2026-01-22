@@ -131,6 +131,7 @@ pipeline {
                             mkdir -p allure-results test-results
         
                             # Start the application in the background then wait for the app to be ready
+                            pip install --quiet -r requirements.txt
                             python main.py &
                             sleep 10 
                             
