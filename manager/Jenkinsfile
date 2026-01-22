@@ -90,31 +90,26 @@ pipeline {
     }
 
     stage('Unit Tests') {
-      when { expression { !params.SKIP_UNIT_TESTS } }
-      steps {
-        echo "🧪 Running Java Unit Tests (com.revature.unittests...)"
-        sh '''
-          set -e
-
-          docker run --rm \
-            -v "$PWD":"${CONTAINER_WS}" \
-            -w "${CONTAINER_WS}/manager" \
-            ${APP_NAME}-testrunner:${BUILD_VERSION} \
-            sh -lc '
-              set -e
-              mvn -v
-              mvn -B clean test \
-                -Dtest="com.revature.unittests.**" \
-                -Dmaven.test.failure.ignore=true
-            '
-        '''
-      }
-      post {
-        always {
-          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+          when { expression { !params.SKIP_UNIT_TESTS } }
+          agent {
+            docker {
+              image 'maven:3.9-eclipse-temurin-21'
+              args '-v maven-repo:/root/.m2'
+              reuseNode true
+            }
+          }
+          steps {
+            echo '🧪 Running Java Unit Tests...'
+            dir('manager') {
+              sh 'mvn -B clean test -Dtest="**/unittests/**"'
+            }
+          }
+          post {
+            always {
+              junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+            }
+          }
         }
-      }
-    }
 
     stage('Start Application') {
       when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS } }
