@@ -2,4 +2,21 @@
 # Custom image that includes Chrome and python:slim for E2E testing
 
 FROM selenium/standalone-chrome:4.9.0
-FROM python:3.12-slim
+
+# Switch to root user to install system packages
+USER root
+
+# Install Python and pip
+# The package names might vary slightly depending on the base Linux distribution
+# (e.g., python3.9-slim, python3.10-slim, etc. are not standard apt packages. We install the standard python3 here).
+RUN apt-get update && apt-get install -y \
+    python3.12 \
+    python3-pip \
+    python3-venv \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set python3.12 as the default python executable
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+
+USER appuser
