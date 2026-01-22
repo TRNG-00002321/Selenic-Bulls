@@ -72,7 +72,7 @@ pipeline {
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=/employee/allure-results \
+                        --alluredir=employee/allure-results \
                         --junitxml=test-results/unit-results.xml
                 '''
             }
@@ -103,7 +103,7 @@ pipeline {
                     
                     # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/employee/allure-results \
+                        --alluredir=employee/allure-results \
                         --junitxml=test-results/integration-results.xml
                     
                     # Kill the background app process
