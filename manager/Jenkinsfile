@@ -326,21 +326,6 @@ pipeline {
       }
     }
 
-    stage('Generate Allure Report') {
-      when { expression { !params.SKIP_ALLURE } }
-      steps {
-        echo '📊 Generating Allure Report...'
-      }
-      post {
-        always {
-          allure([
-            includeProperties: false,
-            results: [[path: 'manager/target/allure-results']]
-          ])
-        }
-      }
-    }
-
     stage('Deploy to QA') {
       when {
         allOf {
@@ -357,6 +342,10 @@ pipeline {
 
   post {
     always {
+    allure([
+                includeProperties: false,
+                results: [[path: 'manager/target/allure-results']]
+              ])
       echo '🧹 Cleaning up...'
       sh '''
         docker stop ${APP_NAME}-test || true
