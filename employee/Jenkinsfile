@@ -113,7 +113,7 @@ pipeline {
                 stage('Chrome E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.chrome'
+                            filename 'Dockerfile.chrome'
                             dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
