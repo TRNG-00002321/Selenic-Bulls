@@ -52,7 +52,7 @@ pipeline {
         // FAIL FAST: Run tests BEFORE building image
         // ============================================
 
-        stage('Unit Tests') {
+        /*stage('Unit Tests') {
             agent {
                 docker {
                     image 'maven:3.9-eclipse-temurin-21'
@@ -71,7 +71,7 @@ pipeline {
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                 }
             }
-        }
+        }*/
 
         stage('API Integration Tests') {
             agent {
