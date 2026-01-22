@@ -256,7 +256,9 @@ pipeline {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
-                    docker-compose down
+                    docker stop ${APP_NAME} || true
+                    docker rm ${APP_NAME} || true
+                    docker rmi ${APP_NAME} || true
                     docker-compose up -d --build employee-app
                 '''
             }
