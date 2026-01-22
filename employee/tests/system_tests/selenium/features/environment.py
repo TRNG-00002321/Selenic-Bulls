@@ -4,7 +4,9 @@ import os
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,14 +24,14 @@ def before_feature(context, feature):
         context.driver = webdriver.Chrome(options=get_chrome_options())
     
     elif browser == "firefox":
-        firefox_options = Options()
+        firefox_options = FirefoxOptions()
         firefox_options.add_argument("--headless")
         context.driver = webdriver.Firefox(options=firefox_options)
     
     elif browser == "edge":
-        edge_options = Options()
+        edge_options = EdgeOptions()
         edge_options.add_argument("--headless")
-        edge_option.add_argument("--no-sandbox")
+        edge_options.add_argument("--no-sandbox")
         context.driver = webdriver.Edge(options=edge_options)
     
     else:
@@ -111,7 +113,7 @@ def after_scenario(context, scenario):
 
 def get_chrome_options():
     """Provides a headless Chrome WebDriver instance"""
-    options = Options()
+    options = ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
