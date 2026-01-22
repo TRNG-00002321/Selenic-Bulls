@@ -60,17 +60,18 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/employee/allure-results:/allure-results'
                 }
             }
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p allure-results test-results
+                    mkdir -p test-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=allure-results \
+                        --alluredir=/allure-results \
                         --junitxml=test-results/unit-results.xml
                 '''
             }
@@ -85,25 +86,26 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/employee/allure-results:/allure-results'
                 }
             }
             steps {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p allure-results test-results
+                    mkdir -p test-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=allure-results \
+                        --alluredir=/allure-results \
                         --junitxml=test-results/integration-results.xml
                 '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
+                    junit allowEmptyResults: true, testResults: 'test-results/*.xml'
                 }
             }
         }
