@@ -3,9 +3,6 @@
 
 pipeline {
     agent any
-    tools {
-        maven 'maven-3'  // Ensure Maven is configured in Jenkins Global Tool Configuration
-    }
 
     environment {
         // Application image name
@@ -56,6 +53,12 @@ pipeline {
         // ============================================
 
         stage('Unit Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-17'
+                    args  '-v maven-repo:/root/.m2 -v ${WORKSPACE_HOST}:/app -w /app'
+                }
+            }
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 sh '''
@@ -68,16 +71,6 @@ pipeline {
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                 }
             }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Java Manager Application...'
-                    sh '''
-                        docker build -f ./manager/Dockerfile -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-                        docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
-                    '''
-           }
         }
 
         stage('API Integration Tests') {
@@ -252,18 +245,6 @@ pipeline {
         // ============================================
         // BUILD: Only after tests pass
         // ============================================
-
-        stage('Build Docker Image') {
-            steps {
-                echo '☕ Building Java Manager Application...'
-                sh '''
-                    docker build \
-                        -t ${APP_NAME}:${BUILD_VERSION} \
-                        -t ${APP_NAME}:latest \
-                        -f Dockerfile .
-                '''
-            }
-        }
 
         stage('Start Application') {
             steps {
