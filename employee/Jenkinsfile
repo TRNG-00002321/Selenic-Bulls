@@ -66,12 +66,12 @@ pipeline {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p ../allure-results ../test-results
+                    mkdir -p allure-results test-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=../allure-results \
-                        --junitxml=../test-results/unit-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/unit-results.xml
                 '''
             }
             post {
@@ -234,21 +234,6 @@ pipeline {
                 }
             }
         }
-        
-        stage('Generate Allure Report') {
-            agent any
-            steps {
-                echo '📊 Generating Allure Report...'
-            }
-            post {
-                always {
-                    allure([
-                        includeProperties: false,
-                        results: [[path: 'employee/allure-results']]
-                    ])
-                }
-            }
-        }
 
         // ============================================
         // BUILD: Only after tests pass
@@ -268,6 +253,7 @@ pipeline {
     
     post {
         always {
+            echo '📊 Generating Allure Report...'
             allure([
                         includeProperties: false,
                         results: [[path: 'employee/allure-results']]
