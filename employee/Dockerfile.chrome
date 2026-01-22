@@ -1,19 +1,29 @@
 # Jenkins Pipeline E2E Setup Stage Dockerfile
 # Custom image that includes Chrome and python:slim for E2E testing
 
-FROM selenium/standalone-chrome:4.9.0
+FROM python:3.12-slim
 
 # Switch to root user to install system packages
 USER root
 
-# Install Python and pip
-# The package names might vary slightly depending on the base Linux distribution
-# (e.g., python3.9-slim, python3.10-slim, etc. are not standard apt packages. We install the standard python3 here).
-RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3-pip \
-    python3-venv \
-    wget \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gnupg \
+    ca-certificates \
+    unzip \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+        | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] \
+        http://dl.google.com/linux/chrome/deb/ stable main" \
+        > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
 # Install project and testing dependencies
