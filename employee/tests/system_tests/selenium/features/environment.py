@@ -29,6 +29,7 @@ def before_feature(context, feature):
     elif browser == "edge":
         edge_options = Options()
         edge_options.add_argument("--headless")
+        edge_option.add_argument("--no-sandbox")
         context.driver = webdriver.Edge(options=edge_options)
     
     else:

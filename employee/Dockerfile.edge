@@ -1,0 +1,31 @@
+# Jenkins Pipeline E2E Setup Stage Dockerfile
+# Custom image that includes Edge and python:slim for E2E testing
+
+# Use the official Python 3.12 slim image (based on Debian Bookworm)
+FROM python:3.12-slim
+
+USER root
+
+# Install necessary packages for adding the repository and downloading files
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    # Import the Microsoft GPG signing keys
+    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg && \
+    install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/ && \
+    # Add the Microsoft Edge repository to APT sources
+    sh -c 'echo "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list' && \
+    # Remove the temporary GPG key file
+    rm microsoft.gpg && \
+    # Update the package list again to include packages from the new repository
+    apt-get update && \
+    # Install Microsoft Edge stable version
+    apt-get install -y --no-install-recommends --no-install-suggests microsoft-edge-stable && \
+    # Clean up apt lists to reduce image size
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# The browser typically requires the --no-sandbox argument when running in a Docker container
+# If you are using this for automation (e.g., Selenium), configure your tests accordingly.
+
+USER appuser
