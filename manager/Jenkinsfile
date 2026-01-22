@@ -56,14 +56,9 @@ pipeline {
             steps {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 sh '''
-                    docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -v maven-repo:/root/.m2 \
-                        -w /app \
-                        maven:3.9-eclipse-temurin-21 \
-                        mvn -f manager/pom.xml clean test \
-                        -Dtest="**/unittests/**" \
-                        -B
+                    cd manager
+                    mvn test -Dtest="**/unittests/**" \
+                        -B \
                 '''
             }
             post {
@@ -83,6 +78,8 @@ pipeline {
             steps {
                 echo '🔌 Running Java API Tests (REST Assured + Integration)...'
                 sh '''
+                    # Navigate to manager module
+                    cd manager
                     # Package and run app if not already running
                     mvn package -DskipTests -B
                     cd target
