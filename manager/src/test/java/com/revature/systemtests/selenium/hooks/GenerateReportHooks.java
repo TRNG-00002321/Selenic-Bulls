@@ -19,6 +19,8 @@ import org.openqa.selenium.firefox.FirefoxOptions;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 
+import com.revature.systemtests.selenium.utils.TestContext;
+
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +43,7 @@ public class GenerateReportHooks {
             Paths.get(System.getProperty("user.dir"), "Downloads");
 
     // Track ownership so we don't quit a shared driver created elsewhere
-    private boolean createdDriverHere = false;
+    private boolean createdLocalDriverHere = false;
 
     @Before
     public void setUp() {
@@ -64,23 +66,26 @@ public class GenerateReportHooks {
             browser = "chrome";
         }
         browser = browser.toLowerCase();
+        CURRENT_BROWSER = browser;
 
         boolean headless = "true".equalsIgnoreCase(System.getenv("HEADLESS"));
 
         // -------------------------------------------------
-        // Remote (CI) vs Local
+        // ✅ CI Mode: if remoteUrl is present, DO NOT create/quit per-scenario sessions.
+        // Reuse the shared driver from TestContext instead.
         // -------------------------------------------------
         String remoteUrl = System.getProperty("selenium.remoteUrl", "").trim();
 
         try {
             if (!remoteUrl.isEmpty()) {
-                // ✅ CI mode: use Selenium container
-                MutableCapabilities options = buildRemoteOptions(browser, headless);
-                driver = new RemoteWebDriver(new URL(remoteUrl), options);
-                createdDriverHere = true;
+                // ✅ Reuse single shared driver (RemoteWebDriver) from TestContext
+                driver = TestContext.getInstance().getDriver();
+                System.out.println("[INFO] Using shared RemoteWebDriver from TestContext | Remote=" + remoteUrl);
 
             } else {
-                // ✅ Local mode: use local browsers + WebDriverManager
+                // -------------------------------------------------
+                // Local Mode: create local drivers (optional)
+                // -------------------------------------------------
                 switch (browser) {
                     case "chrome": {
                         WebDriverManager.chromedriver().setup();
@@ -88,8 +93,6 @@ public class GenerateReportHooks {
                         configureChromeEdgeDownloads(options);
 
                         options.addArguments("--window-size=1920,1080");
-                        options.addArguments("--no-sandbox");
-                        options.addArguments("--disable-dev-shm-usage");
 
                         if (headless) {
                             options.addArguments("--headless=new");
@@ -119,8 +122,6 @@ public class GenerateReportHooks {
                         FirefoxOptions options = new FirefoxOptions();
                         configureFirefoxDownloads(options);
 
-                        // Firefox doesn't support --window-size arg like Chromium;
-                        // maximize() will handle it.
                         if (headless) {
                             options.addArguments("-headless");
                         }
@@ -133,11 +134,14 @@ public class GenerateReportHooks {
                         throw new IllegalArgumentException("Unsupported browser: " + browser);
                 }
 
-                createdDriverHere = true;
+                createdLocalDriverHere = true;
+                System.out.println("[INFO] Started LOCAL driver | Browser=" + browser + " | Headless=" + headless);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to start WebDriver (remoteUrl=" + remoteUrl + ", browser=" + browser + ")", e);
+            throw new RuntimeException(
+                    "Failed to start WebDriver (remoteUrl=" + remoteUrl + ", browser=" + browser + ")", e
+            );
         }
 
         // -------------------------------------------------
@@ -150,47 +154,24 @@ public class GenerateReportHooks {
         } catch (Exception ignored) {
             // Some remote setups may ignore maximize
         }
-
-        System.out.println("[INFO] Browser started: " + browser + " | Headless=" + headless + " | Remote=" + (!remoteUrl.isEmpty()));
-        CURRENT_BROWSER = browser;
     }
 
     @After
     public void tearDown() {
-        // ✅ Only quit if this hook created the driver
-        if (createdDriverHere && driver != null) {
+        // ✅ CI: do NOT quit shared driver here (prevents "session not found")
+        // Local: quit only if we created the local driver in this hook
+        if (createdLocalDriverHere && driver != null) {
             try {
                 driver.quit();
             } catch (Exception ignored) {}
             driver = null;
-            createdDriverHere = false;
-        }
-    }
-
-    // =================================================
-    // Remote capabilities
-    // =================================================
-    private MutableCapabilities buildRemoteOptions(String browser, boolean headless) {
-
-        switch (browser) {
-            case "firefox": {
-                FirefoxOptions o = new FirefoxOptions();
-                if (headless) o.addArguments("-headless");
-                return o;
-            }
-            case "edge": {
-                EdgeOptions o = new EdgeOptions();
-                if (headless) o.addArguments("--headless=new");
-                return o;
-            }
-            default: {
-                ChromeOptions o = new ChromeOptions();
-                // Recommended for containers
-                o.addArguments("--no-sandbox");
-                o.addArguments("--disable-dev-shm-usage");
-                o.addArguments("--window-size=1920,1080");
-                if (headless) o.addArguments("--headless=new");
-                return o;
+            createdLocalDriverHere = false;
+        } else {
+            // Optional: per-scenario cleanup without killing session
+            if (driver != null) {
+                try {
+                    driver.manage().deleteAllCookies();
+                } catch (Exception ignored) {}
             }
         }
     }
