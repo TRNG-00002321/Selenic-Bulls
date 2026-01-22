@@ -5,7 +5,11 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'BROWSER', choices:['chrome', 'firefox', 'edge'], description: 'Web Browser')
+        choice(
+            name: 'BROWSER', 
+            choices:['all', 'chrome', 'firefox', 'edge'], 
+            description: 'Browser to run tests on'
+        )
     }
     
     environment {
@@ -104,25 +108,98 @@ pipeline {
             }
         }
         
-       /* stage('E2E Tests') {
-            agent {
-                docker {
-                    image 'python:3.12-slim'
+        stage('E2E Tests') {
+            parallel {
+                stage('Chrome E2E Tests') {
+                    agent {
+                        dockerfile {
+                            filename 'employee/Dockerfile.build'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                        }
+                    }
+                    when {
+                        expression {
+                            // This stage only runs if the browser chosen is 'all' or 'chrome'
+                            return params.BROWSER == 'all' || params.BROWSER == 'chrome'
+                        }
+                    }
+                    steps {
+                        echo '🌐 Running Python E2E Tests in Chrome (Behave + Selenium)...'
+                        sh '''
+                            cd employee
+                            mkdir -p allure-results test-results
+        
+                            # Start the application in the background then wait for the app to be ready
+                            pip install --quiet behave selenium allure-behave webdriver-manager
+                            pip install --quiet -r requirements.txt
+                            python main.py &
+                            sleep 10 
+                            
+                            # Run Behave tests
+                            behave -D browser=chrome ./tests/system_tests/selenium/features
+                        '''
+                    }
                 }
-            }
-            steps {
-                echo '🌐 Running Python E2E Tests (Behave + Integration)...'
-                sh '''
-                    cd employee
-                    mkdir -p allure-results test-results
-
-                    # Start the application
-                    pip install --quiet -r requirements.txt
-                    # TODO: pip install browsers
-                    
-                    # Run Behave tests
-                    behave -D browser=${params.BROWSER} ./tests/system_tests/selenium/features
-                '''
+                stage('Firefox E2E Tests') {
+                    agent {
+                        dockerfile {
+                            filename 'employee/Dockerfile.build'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                        }
+                    }
+                     when {
+                        expression {
+                            // This stage only runs if the browser chosen is 'all' or 'firefox'
+                            return params.BROWSER == 'all' || params.BROWSER == 'firefox'
+                        }
+                    }
+                    steps {
+                        echo '🌐 Running Python E2E Tests in Firefox (Behave + Selenium)...'
+                        sh '''
+                            cd employee
+                            mkdir -p allure-results test-results
+        
+                            # Start the application in the background then wait for the app to be ready
+                            pip install --quiet behave selenium allure-behave webdriver-manager
+                            pip install --quiet -r requirements.txt
+                            python main.py &
+                            sleep 10 
+                            
+                            # Run Behave tests
+                            behave -D browser=firefox ./tests/system_tests/selenium/features
+                        '''
+                    }
+                }
+                stage('Edge E2E Tests') {
+                    agent {
+                        dockerfile {
+                            filename 'employee/Dockerfile.build'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
+                        }
+                    }
+                     when {
+                        expression {
+                            // This stage only runs if the browser chosen is 'all' or 'edge'
+                            return params.BROWSER == 'all' || params.BROWSER == 'edge'
+                        }
+                    }
+                    steps {
+                        echo '🌐 Running Python E2E Tests in Edge (Behave + Selenium)...'
+                        sh '''
+                            cd employee
+                            mkdir -p allure-results test-results
+        
+                            # Start the application in the background then wait for the app to be ready
+                            pip install --quiet behave selenium allure-behave webdriver-manager
+                            pip install --quiet -r requirements.txt
+                            python main.py &
+                            sleep 10 
+                            
+                            # Run Behave tests
+                            behave -D browser=edge ./tests/system_tests/selenium/features
+                        '''
+                    }
+                }
             }
         } */
         

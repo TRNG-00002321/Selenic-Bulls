@@ -1,5 +1,5 @@
 # Hooks (setup/teardown) for the Selenium tests
-from dbm import sqlite3
+import sqlite3
 import os
 import pytest
 from selenium import webdriver
