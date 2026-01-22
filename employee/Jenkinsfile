@@ -97,8 +97,8 @@ pipeline {
                     python main.py &  # Start the app in the background
                     sleep 10 # Wait for app to be ready
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=/app/allure-results \
-                        --junitxml=/app/test-results/integration-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/integration-results.xml
                 '''
             }
             post {
