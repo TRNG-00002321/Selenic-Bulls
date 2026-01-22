@@ -5,7 +5,6 @@ pipeline {
     APP_NAME      = 'expense-manager'
     APP_PORT      = '5001'
     BUILD_VERSION = "${BUILD_NUMBER}"
-
     APP_URL = "http://localhost:${APP_PORT}"
   }
 
@@ -38,9 +37,18 @@ pipeline {
       }
     }
 
-    // ============================================
-    // FAIL FAST: unit tests before container build
-    // ============================================
+    // Capture REAL workspace path (more reliable than env.WORKSPACE in Docker mounts)
+    stage('Resolve Workspace Path') {
+      steps {
+        script {
+          env.WS_REAL = sh(script: 'pwd', returnStdout: true).trim()
+          echo "✅ Real workspace path: ${env.WS_REAL}"
+          sh 'ls -la'
+          sh 'ls -la manager || true'
+        }
+      }
+    }
+
     stage('Unit Tests') {
       when { expression { !params.SKIP_UNIT_TESTS } }
       agent {
@@ -58,17 +66,11 @@ pipeline {
       }
       post {
         always {
-          // ✅ safer: collect surefire reports anywhere in repo
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
     }
 
-    // ============================================
-    // BUILD IMAGES
-    // - runtime image: production style
-    // - testrunner image: contains mvn + JDK for Option B
-    // ============================================
     stage('Build Docker Images') {
       steps {
         echo '☕ Building Java Manager Docker images...'
@@ -76,13 +78,11 @@ pipeline {
           sh '''
             set -e
 
-            # Build production/runtime image (default final stage)
             docker build \
               -t ${APP_NAME}:${BUILD_VERSION} \
               -t ${APP_NAME}:latest \
               -f Dockerfile .
 
-            # Build test runner image (target testrunner)
             docker build \
               --target testrunner \
               -t ${APP_NAME}-testrunner:${BUILD_VERSION} \
@@ -92,10 +92,6 @@ pipeline {
       }
     }
 
-    // ============================================
-    // START APP (using testrunner image so mvn exists)
-    // Mount ENTIRE workspace so pom.xml is guaranteed accessible
-    // ============================================
     stage('Start Application') {
       steps {
         echo '🚀 Starting Manager App (testrunner image) for API/E2E Testing...'
@@ -110,13 +106,14 @@ pipeline {
           docker volume rm expense-data || true
           docker volume create expense-data
 
-          # ✅ Mount entire repo workspace into /workspace
+          echo "Mounting real workspace: ${WS_REAL} -> /workspace"
+
           docker run -d \
             --name ${APP_NAME}-test \
             --network jenkins-test-network \
             -p ${APP_PORT}:${APP_PORT} \
             -v expense-data:/data \
-            -v "${WORKSPACE}:/workspace" \
+            -v "${WS_REAL}:/workspace" \
             ${APP_NAME}-testrunner:${BUILD_VERSION}
 
           echo "Waiting for application health (inside container)..."
@@ -137,10 +134,6 @@ pipeline {
       }
     }
 
-    // ============================================
-    // API TESTS (Option B): inside SAME app container
-    // ✅ Find the pom.xml dynamically under /workspace
-    // ============================================
     stage('API Tests') {
       when { expression { !params.SKIP_API_TESTS } }
       steps {
@@ -148,22 +141,33 @@ pipeline {
         sh '''
           set -e
 
-          # Sanity check: mvn + java exist
+          # Sanity check tools
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
 
-          # Debug mount (optional but helpful)
-          docker exec ${APP_NAME}-test sh -lc "echo '--- /workspace ---'; ls -la /workspace | head -n 200 || true"
+          echo "---- Listing /workspace in container ----"
+          docker exec ${APP_NAME}-test sh -lc "ls -la /workspace; echo '----'; ls -la /workspace/manager || true"
 
-          # ✅ Find pom.xml and run from its directory
+          # 1) Prefer manager module pom (most common layout)
+          # 2) Fallback to searching for pom.xml if it's elsewhere
           docker exec ${APP_NAME}-test sh -lc '
             set -e
-            POM="$(find /workspace -maxdepth 6 -name pom.xml | head -n 1)"
-            echo "Found POM at: $POM"
-            test -n "$POM"
 
-            DIR="$(dirname "$POM")"
-            echo "Running Maven from: $DIR"
-            cd "$DIR"
+            if [ -f /workspace/manager/pom.xml ]; then
+              echo "✅ Using /workspace/manager/pom.xml"
+              cd /workspace/manager
+            elif [ -f /workspace/pom.xml ]; then
+              echo "✅ Using /workspace/pom.xml"
+              cd /workspace
+            else
+              echo "⚠️ pom.xml not found in expected locations. Searching..."
+              POM="$(find /workspace -maxdepth 8 -name pom.xml | head -n 1)"
+              echo "Found POM at: $POM"
+              test -n "$POM"
+              cd "$(dirname "$POM")"
+            fi
+
+            echo "Running Maven from: $(pwd)"
+            ls -la
 
             mvn -B test \
               -Dtest="**/integrationtests/**" \
@@ -175,15 +179,11 @@ pipeline {
       }
       post {
         always {
-          // ✅ safer: collect surefire reports anywhere in repo
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
     }
 
-    // ============================================
-    // E2E TESTS (kept running via maven container)
-    // ============================================
     stage('E2E Tests') {
       when { expression { !params.SKIP_E2E_TESTS } }
       agent {
@@ -276,7 +276,7 @@ pipeline {
       }
       steps {
         echo '🚀 All tests passed! Deploying Manager App to QA...'
-        // (keep your existing deploy logic here)
+        // keep your deploy logic
       }
     }
   }
