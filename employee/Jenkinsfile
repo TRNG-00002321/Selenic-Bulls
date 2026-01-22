@@ -111,6 +111,11 @@ pipeline {
         stage('E2E Tests') {
             parallel {
                 stage('Chrome E2E Tests') {
+                    agent {
+                        docker {
+                            image 'selenium/standalone-chrome:4.9.0'
+                        }
+                    }
                     when {
                         expression {
                             // This stage only runs if the browser chosen is 'all' or 'chrome'
@@ -135,6 +140,11 @@ pipeline {
                     }
                 }
                 stage('Firefox E2E Tests') {
+                    agent {
+                        docker {
+                            image 'selenium/standalone-firefox:4.9.0'
+                        }
+                    }
                      when {
                         expression {
                             // This stage only runs if the browser chosen is 'all' or 'firefox'
@@ -159,6 +169,11 @@ pipeline {
                     }
                 }
                 stage('Edge E2E Tests') {
+                    agent {
+                        docker {
+                            image 'selenium/standalone-edge:4.9.0'
+                        }
+                    }
                      when {
                         expression {
                             // This stage only runs if the browser chosen is 'all' or 'edge'
