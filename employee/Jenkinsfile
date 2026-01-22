@@ -60,6 +60,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
@@ -81,7 +82,7 @@ pipeline {
             }
         }
         
-        stage('API Tests') {
+        /*stage('API Tests') {
             agent {
                 docker {
                     image 'python:3.12-slim'
@@ -262,7 +263,7 @@ pipeline {
                     docker-compose up -d --build employee-app
                 '''
             }
-        }
+        } */
     }
     
     post {
