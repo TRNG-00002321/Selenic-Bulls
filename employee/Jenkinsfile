@@ -227,7 +227,7 @@ pipeline {
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'htmlcov',
+                        reportDir: 'employee/htmlcov',
                         reportFiles: 'index.html',
                         reportName: 'Python Coverage Report'
                     ])
