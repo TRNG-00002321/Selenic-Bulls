@@ -115,7 +115,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers:latest -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                     when {
@@ -145,7 +145,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers:latest -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -175,7 +175,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-t python-browsers:latest -v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
