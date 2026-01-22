@@ -22,10 +22,14 @@ def before_feature(context, feature):
         context.driver = webdriver.Chrome(options=get_chrome_options())
     
     elif browser == "firefox":
-        context.driver = webdriver.Firefox()
+        firefox_options = Options()
+        firefox_options.add_argument("--headless")
+        context.driver = webdriver.Firefox(options=firefox_options)
     
     elif browser == "edge":
-        context.driver = webdriver.Edge()
+        edge_options = Options()
+        edge_options.add_argument("--headless")
+        context.driver = webdriver.Edge(options=edge_options)
     
     else:
         raise ValueError(f"Unsupported browser: {browser}")
@@ -107,7 +111,7 @@ def after_scenario(context, scenario):
 def get_chrome_options():
     """Provides a headless Chrome WebDriver instance"""
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--guest")
