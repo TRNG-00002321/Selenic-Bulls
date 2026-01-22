@@ -72,7 +72,19 @@ pipeline {
                 }
             }
         }*/
-
+        stage ('Build Docker Image and Start Test Container') {
+            steps {
+                echo '🛠️ Building Manager App Docker Image...'
+                sh '''
+                    cd manager
+                    docker build -t ${APP_NAME}-test-image:${BUILD_VERSION} -f Dockerfile .
+                    docker run -d \
+                        --name ${APP_NAME}-test-container \
+                        -p ${APP_PORT}:${APP_PORT} \
+                        ${APP_NAME}-test-image:${BUILD_VERSION}
+                '''
+            }
+        }
         stage('API Integration Tests') {
             agent {
                 docker {
@@ -83,16 +95,8 @@ pipeline {
             steps {
                 echo '🔌 Running Java API Tests (REST Assured + Integration)...'
                 sh '''
-                    # Navigate to manager module
-                    cd manager
-                    # Package and run app if not already running
-                    mvn package -DskipTests -B
-                    cd target
-                    java -jar manager-1.0-SNAPSHOT.jar &
-                    sleep 10  # Wait for app to start
-
                     # Run API tests
-                    cd ..
+                    cd manager
                     mvn test \
                         -Dtest="**/integrationtests/**" \
                         -B
