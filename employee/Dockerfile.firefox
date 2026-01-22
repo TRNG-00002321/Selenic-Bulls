@@ -1,7 +1,8 @@
 # Jenkins Pipeline E2E Setup Stage Dockerfile
-# Custom image that includes Chrome and python:slim for E2E testing
+# Custom image that includes Firefox and python:slim for E2E testing
 
-FROM selenium/standalone-chrome:4.9.0
+# Use the selenium/standalone-firefox image as the base
+FROM selenium/standalone-firefox:4.9.0
 
 # Switch to root user to install system packages
 USER root
