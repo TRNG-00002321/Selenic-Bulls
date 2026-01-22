@@ -63,6 +63,27 @@ pipeline {
       }
     }
 
+    stage('Unit Tests') {
+            agent {
+                docker {
+                    image 'maven:3.9-eclipse-temurin-21'
+                    args  '-v maven-repo:/root/.m2 -v ${WORKSPACE_HOST}:/app -w /app'
+                }
+            }
+            steps {
+                echo '🧪 Running Java Unit Tests with Allure...'
+                sh '''
+                    cd manager
+                    mvn clean test -Dtest="" -B 
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                }
+            }
+    }
+
     stage('Build Docker Images') {
       steps {
         echo '☕ Building Java Manager Docker images...'
