@@ -1,4 +1,4 @@
-o# Jenkins Pipeline E2E Setup Stage Dockerfile
+# Jenkins Pipeline E2E Setup Stage Dockerfile
 # Custom image that includes Chrome and python:slim for E2E testing
 
 FROM selenium/standalone-chrome:4.9.0
