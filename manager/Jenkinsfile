@@ -72,7 +72,7 @@ pipeline {
                 }
             }
         }*/
-        stage ('Build Docker Image') {
+        /*stage ('Build Docker Image') {
             steps {
                 echo '🛠️ Building Manager App Docker Image...'
                 sh '''
@@ -80,7 +80,7 @@ pipeline {
                     docker build -t ${APP_NAME}-test-image:${BUILD_VERSION} -f Dockerfile .
                 '''
             }
-        }
+        }*/
 
         stage('API Integration Tests') {
             agent {
@@ -92,8 +92,14 @@ pipeline {
             steps {
                 echo '🔌 Running Java API Tests (REST Assured + Integration)...'
                 sh '''
-                    # Run API tests
+                    # Start the application in jenkins server background
                     cd manager
+                    mvn clean package -DskipTests -B
+                    cd target
+                    java -jar manager-1.0-SNAPSHOT.jar &
+                    sleep 10
+                    # Run API tests
+                    cd ..
                     mvn test \
                         -Dtest="**/integrationtests/**" \
                         -B
