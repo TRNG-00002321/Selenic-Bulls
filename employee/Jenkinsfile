@@ -262,9 +262,10 @@ pipeline {
     
     post {
         always {
+            steps {
+                unstash 'test-results-unit'
+            }
             dir ('employee') {
-                stash
-
                 echo '📊 Generating Allure Report...'
                 allure([
                             includeProperties: false,
