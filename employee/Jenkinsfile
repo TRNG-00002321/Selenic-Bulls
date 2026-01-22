@@ -261,9 +261,7 @@ pipeline {
     
     post {
         always {
-            steps {
-                unstash 'test-results-unit'
-            }
+            unstash 'test-results-unit'
             dir ('employee') {
                 echo '📊 Generating Allure Report...'
                 allure([
