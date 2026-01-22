@@ -258,7 +258,7 @@ pipeline {
             echo '📊 Generating Allure Report...'
             allure([
                         includeProperties: false,
-                        results: [[path: 'employee/allure-results']]
+                        results: [[path: '${WORKSPACE}/employee/allure-results']]
                     ])
 
             echo '🧹 Cleaning up...'
@@ -270,7 +270,7 @@ pipeline {
             
             archiveArtifacts artifacts: '''
                 test-results/**/*.xml,
-                allure-results/**/*,
+                ${WORKSPACE}/employee/allure-results/**/*,
                 htmlcov/**/*
             ''', allowEmptyArchive: true
         }
