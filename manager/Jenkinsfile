@@ -197,6 +197,125 @@ pipeline {
         }
       }
     }
+    
+    stage('Start Selenium Grid') {
+      when { expression { !params.SKIP_E2E_TESTS } }
+      steps {
+        sh '''
+          set -e
+          docker rm -f ${SELENIUM_HUB} ${SEL_NODE_CHROME} ${SEL_NODE_FIREFOX} ${SEL_NODE_EDGE} >/dev/null 2>&1 || true
+
+          docker run -d --name ${SELENIUM_HUB} --network ${TEST_NETWORK} -p 4444:4444 ${SELENIUM_HUB_IMAGE}
+
+          docker run -d --name ${SEL_NODE_CHROME} --network ${TEST_NETWORK} \
+            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            ${SEL_NODE_CHROME_IMAGE}
+
+          docker run -d --name ${SEL_NODE_FIREFOX} --network ${TEST_NETWORK} \
+            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            ${SEL_NODE_FIREFOX_IMAGE}
+
+          docker run -d --name ${SEL_NODE_EDGE} --network ${TEST_NETWORK} \
+            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            ${SEL_NODE_EDGE_IMAGE}
+
+          echo "Waiting for Selenium hub..."
+          for i in $(seq 1 30); do
+            if docker exec ${SELENIUM_HUB} sh -lc "wget -qO- http://localhost:4444/status | grep -q '\\"ready\\":true'"; then
+              echo "✅ Selenium Grid ready"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs ${SELENIUM_HUB} || true
+          exit 1
+        '''
+      }
+    }
+
+    stage('E2E Tests (Selenium)') {
+      when { expression { !params.SKIP_E2E_TESTS } }
+      parallel {
+        stage('E2E - Chrome') {
+          steps {
+            sh '''
+              set -e
+              docker exec ${APP_NAME}-test sh -lc '
+                set -e
+                cd '"${CONTAINER_WS}"'/manager
+                rm -rf target || true
+
+                export BASE_URL="http://localhost:'"${APP_PORT}"'"
+
+                mvn -B clean test \
+                  -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
+                  -DbaseUrl="${BASE_URL}" \
+                  -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
+                  -Dbrowser=chrome \
+                  -Dmaven.test.failure.ignore=true
+              '
+            '''
+          }
+          post { always { junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml' } }
+        }
+
+        stage('E2E - Firefox') {
+          steps {
+            sh '''
+              set -e
+              docker exec ${APP_NAME}-test sh -lc '
+                set -e
+                cd '"${CONTAINER_WS}"'/manager
+                rm -rf target || true
+
+                export BASE_URL="http://localhost:'"${APP_PORT}"'"
+
+                mvn -B clean test \
+                  -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
+                  -DbaseUrl="${BASE_URL}" \
+                  -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
+                  -Dbrowser=firefox \
+                  -Dmaven.test.failure.ignore=true
+              '
+            '''
+          }
+          post { always { junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml' } }
+        }
+
+        stage('E2E - Edge') {
+          steps {
+            sh '''
+              set -e
+              docker exec ${APP_NAME}-test sh -lc '
+                set -e
+                cd '"${CONTAINER_WS}"'/manager
+                rm -rf target || true
+
+                export BASE_URL="http://localhost:'"${APP_PORT}"'"
+
+                mvn -B clean test \
+                  -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
+                  -DbaseUrl="${BASE_URL}" \
+                  -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
+                  -Dbrowser=edge \
+                  -Dmaven.test.failure.ignore=true
+              '
+            '''
+          }
+          post { always { junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml' } }
+        }
+      }
+    }
+
+    stage('Stop Selenium Grid') {
+      when { expression { !params.SKIP_E2E_TESTS } }
+      steps {
+        sh '''
+          docker rm -f ${SELENIUM_HUB} ${SEL_NODE_CHROME} ${SEL_NODE_FIREFOX} ${SEL_NODE_EDGE} >/dev/null 2>&1 || true
+        '''
+      }
+    }
 
     stage('Stop Test Container') {
       steps {
