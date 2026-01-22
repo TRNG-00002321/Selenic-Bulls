@@ -1,4 +1,4 @@
-# Jenkins Pipeline E2E Setup Stage Dockerfile
+o# Jenkins Pipeline E2E Setup Stage Dockerfile
 # Custom image that includes Chrome and python:slim for E2E testing
 
 FROM selenium/standalone-chrome:4.9.0
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install project and testing dependencies
 RUN pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-RUN pip install --quiet --no-cache-dir -r requirements.txt
+RUN pip install --quiet --no-cache-dir -r employee/requirements.txt
 
 # Switch back to non-root user
 USER appuser
