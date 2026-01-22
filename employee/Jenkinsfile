@@ -113,7 +113,7 @@ pipeline {
                 stage('Chrome E2E Tests') {
                     agent {
                         docker {
-                            image 'selenium/standalone-chrome:4.9.0'
+                            image 'python:3.12-slim'
                         }
                     }
                     when {
@@ -142,7 +142,7 @@ pipeline {
                 stage('Firefox E2E Tests') {
                     agent {
                         docker {
-                            image 'selenium/standalone-firefox:4.9.0'
+                            image 'python:3.12-slim'
                         }
                     }
                      when {
@@ -171,7 +171,7 @@ pipeline {
                 stage('Edge E2E Tests') {
                     agent {
                         docker {
-                            image 'selenium/standalone-edge:4.9.0'
+                            image 'python:3.12-slim'
                         }
                     }
                      when {
