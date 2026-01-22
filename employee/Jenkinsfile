@@ -258,7 +258,7 @@ pipeline {
             echo '📊 Generating Allure Report...'
             allure([
                         includeProperties: false,
-                        results: [[path: '/employee/allure-results']]
+                        results: [[path: 'employee/allure-results']]
                     ])
 
             echo '🧹 Cleaning up...'
