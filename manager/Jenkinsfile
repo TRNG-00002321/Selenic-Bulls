@@ -82,26 +82,6 @@ pipeline {
             }
         }
 
-        stage ('Start Application') {
-            steps {
-                echo '🚀 Starting Manager App for Testing...'
-                sh '''
-                    # Start the container
-                    docker run -d \
-                        --name ${APP_NAME}-test \
-                        -p ${APP_PORT}:${APP_PORT} \
-                        -v expense-data:/data \
-                        ${APP_NAME}-test-image:${BUILD_VERSION}
-
-                    # Wait for app to be healthy
-                    echo "Waiting for application to start..."
-                    sleep 10
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
-                    echo "✅ Application is ready!"
-                '''
-            }
-        }
-
         stage('API Integration Tests') {
             agent {
                 docker {
