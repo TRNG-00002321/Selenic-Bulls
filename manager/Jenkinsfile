@@ -248,6 +248,9 @@ pipeline {
             --name "${SELENIUM_CONTAINER}" \
             --network "${TEST_NETWORK}" \
             -p 4444:4444 \
+            -e OTEL_TRACES_EXPORTER=none \
+            -e OTEL_METRICS_EXPORTER=none \
+            -e OTEL_LOGS_EXPORTER=none \
             "${SELENIUM_IMAGE}"
 
           echo "Waiting for Selenium..."
