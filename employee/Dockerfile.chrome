@@ -11,7 +11,6 @@ USER root
 # (e.g., python3.9-slim, python3.10-slim, etc. are not standard apt packages. We install the standard python3 here).
 RUN apt-get update && apt-get install -y \
     python3.12 \
-    python3.12-slim \
     python3-pip \
     python3-venv \
     wget \
