@@ -114,7 +114,6 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.build'
-                            label 'e2e-agent-image'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -145,7 +144,6 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.build'
-                            label 'e2e-agent-image'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -176,7 +174,6 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.build'
-                            label 'e2e-agent-image'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
