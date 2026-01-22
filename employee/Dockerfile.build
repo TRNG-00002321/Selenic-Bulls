@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     apt-transport-https \
     ca-certificates \
-    software-properties-common \
     # Firefox ESR is in the default repos
     firefox-esr \
     # Chrome dependencies (general X11 libs are also useful)
