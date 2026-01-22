@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install project and testing dependencies
 RUN pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-COPY ./ employee/
 
 # Switch back to non-root user
 USER appuser
