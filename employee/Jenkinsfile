@@ -269,9 +269,9 @@ pipeline {
             '''
             
             archiveArtifacts artifacts: '''
-                /employee/test-results/**/*.xml,
-                /employee/allure-results/**/*,
-                htmlcov/**/*
+                employee/test-results/**/*.xml,
+                employee/allure-results/**/*,
+                employee/htmlcov/**/*
             ''', allowEmptyArchive: true
         }
         
