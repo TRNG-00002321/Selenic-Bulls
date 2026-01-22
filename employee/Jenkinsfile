@@ -209,6 +209,7 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
+                    args '-v ${WORKSPACE}/employee/htmlcov:${WORKSPACE}/employee/htmlcov'
                 }
             }
             steps {
@@ -266,6 +267,16 @@ pipeline {
                 docker stop ${APP_NAME}-test || true
                 docker rm ${APP_NAME}-test || true
                 docker rmi ${APP_NAME}:${BUILD_VERSION} || true
+            '''
+            
+            echo '📦 Archiving test results and reports...'
+            sh '''
+                echo "=== Checking for test-results ==="
+                find employee/test-results -type f 2>/dev/null || echo "No test-results found"
+                echo "=== Checking for allure-results ==="
+                find employee/allure-results -type f 2>/dev/null || echo "No allure-results found"
+                echo "=== Checking for htmlcov ==="
+                find employee/htmlcov -type f 2>/dev/null || echo "No htmlcov found"
             '''
             
             archiveArtifacts artifacts: '''
