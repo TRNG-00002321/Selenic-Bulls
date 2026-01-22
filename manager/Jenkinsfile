@@ -58,7 +58,8 @@ pipeline {
       }
       post {
         always {
-          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+          // ✅ safer: collect surefire reports anywhere in repo
+          junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
     }
@@ -93,6 +94,7 @@ pipeline {
 
     // ============================================
     // START APP (using testrunner image so mvn exists)
+    // Mount ENTIRE workspace so pom.xml is guaranteed accessible
     // ============================================
     stage('Start Application') {
       steps {
@@ -108,13 +110,13 @@ pipeline {
           docker volume rm expense-data || true
           docker volume create expense-data
 
-          # Start app in the SAME container we'll run mvn inside
+          # ✅ Mount entire repo workspace into /workspace
           docker run -d \
             --name ${APP_NAME}-test \
             --network jenkins-test-network \
             -p ${APP_PORT}:${APP_PORT} \
             -v expense-data:/data \
-            -v "${WORKSPACE}/manager:/workspace/manager" \
+            -v "${WORKSPACE}:/workspace" \
             ${APP_NAME}-testrunner:${BUILD_VERSION}
 
           echo "Waiting for application health (inside container)..."
@@ -137,6 +139,7 @@ pipeline {
 
     // ============================================
     // API TESTS (Option B): inside SAME app container
+    // ✅ Find the pom.xml dynamically under /workspace
     // ============================================
     stage('API Tests') {
       when { expression { !params.SKIP_API_TESTS } }
@@ -145,12 +148,23 @@ pipeline {
         sh '''
           set -e
 
-          # Sanity check (helps debug quickly)
+          # Sanity check: mvn + java exist
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
 
-          # Run tests against localhost from inside the same container
+          # Debug mount (optional but helpful)
+          docker exec ${APP_NAME}-test sh -lc "echo '--- /workspace ---'; ls -la /workspace | head -n 200 || true"
+
+          # ✅ Find pom.xml and run from its directory
           docker exec ${APP_NAME}-test sh -lc '
-            cd /workspace/manager && \
+            set -e
+            POM="$(find /workspace -maxdepth 6 -name pom.xml | head -n 1)"
+            echo "Found POM at: $POM"
+            test -n "$POM"
+
+            DIR="$(dirname "$POM")"
+            echo "Running Maven from: $DIR"
+            cd "$DIR"
+
             mvn -B test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
@@ -161,13 +175,14 @@ pipeline {
       }
       post {
         always {
-          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+          // ✅ safer: collect surefire reports anywhere in repo
+          junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
     }
 
     // ============================================
-    // E2E TESTS (kept as you had it, running in Maven container)
+    // E2E TESTS (kept running via maven container)
     // ============================================
     stage('E2E Tests') {
       when { expression { !params.SKIP_E2E_TESTS } }
@@ -192,7 +207,7 @@ pipeline {
       }
       post {
         always {
-          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+          junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
     }
@@ -278,9 +293,9 @@ pipeline {
       '''
 
       archiveArtifacts artifacts: '''
-        manager/target/surefire-reports/**/*.xml,
-        manager/target/allure-results/**/*,
-        manager/target/site/jacoco/**/*
+        **/target/surefire-reports/**/*.xml,
+        **/target/allure-results/**/*,
+        **/target/site/jacoco/**/*
       ''', allowEmptyArchive: true
     }
 
