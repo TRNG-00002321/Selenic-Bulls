@@ -175,7 +175,7 @@ pipeline {
         // ============================================
         // BUILD: Only after tests pass
         // ============================================
-        stage('Build Docker Image') {
+        stage('Deploy to QA Environment') {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
@@ -184,52 +184,6 @@ pipeline {
                 '''
             }
         }
-        
-        stage('Deploy to QA') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { currentBuild.currentResult == 'SUCCESS' }
-                }
-            }
-            steps {
-                echo '🚀 All tests passed! Deploying Employee App to QA...'
-                
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'ec2-ssh-key',
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
-                    sh '''
-                        # Save and transfer Docker image
-                        docker save ${APP_NAME}:${BUILD_VERSION} | gzip > ${APP_NAME}.tar.gz
-                        scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
-                            ${APP_NAME}.tar.gz ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/
-                        
-                        # Deploy on EC2
-                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
-                            echo "🔨 Loading Docker image..."
-                            gunzip -c ${APP_NAME}.tar.gz | docker load
-                            rm ${APP_NAME}.tar.gz
-                            
-                            echo "🛑 Stopping existing container..."
-                            docker stop expense-employee || true
-                            docker rm expense-employee || true
-                            
-                            echo "🚀 Starting new container..."
-                            docker run -d \
-                                --name expense-employee \
-                                --restart unless-stopped \
-                                -p 5000:5000 \
-                                -v expense-data:/data \
-                                expense-employee:latest
-                            
-                            sleep 15
-                            curl -f http://localhost:5000/health && echo "✅ Employee app deployed!"
-                        rm ${APP_NAME}.tar.gz
-                    '''
-                }
-            }
-        }        
     }
     
     post {
