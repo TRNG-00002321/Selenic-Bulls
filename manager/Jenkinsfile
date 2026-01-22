@@ -20,6 +20,12 @@ pipeline {
     SELENIUM_CONTAINER   = "selenium-chrome"
     SELENIUM_IMAGE       = "selenium/standalone-chrome:4.25.0"
     SELENIUM_REMOTE_URL  = "http://selenium-chrome:4444/wd/hub"
+
+    // ✅ Allure output folders (host workspace)
+    ALLURE_ROOT = "manager/target/allure-results"
+    ALLURE_UNIT = "manager/target/allure-results/unit"
+    ALLURE_API  = "manager/target/allure-results/api"
+    ALLURE_E2E  = "manager/target/allure-results/e2e"
   }
 
   options {
@@ -64,6 +70,10 @@ pipeline {
             echo "❌ Seed DB NOT found at ${SEED_DB_PATH}"
             exit 1
           fi
+
+          # ✅ Prepare Allure directories on host
+          rm -rf manager/target/allure-results || true
+          mkdir -p ${ALLURE_UNIT} ${ALLURE_API} ${ALLURE_E2E}
         '''
       }
     }
@@ -90,26 +100,31 @@ pipeline {
     }
 
     stage('Unit Tests') {
-          when { expression { !params.SKIP_UNIT_TESTS } }
-          agent {
-            docker {
-              image 'maven:3.9-eclipse-temurin-21'
-              args '-v maven-repo:/root/.m2'
-              reuseNode true
-            }
-          }
-          steps {
-            echo '🧪 Running Java Unit Tests...'
-            dir('manager') {
-              sh 'mvn -B clean test -Dtest="**/unittests/**"'
-            }
-          }
-          post {
-            always {
-              junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
-            }
-          }
+      when { expression { !params.SKIP_UNIT_TESTS } }
+      agent {
+        docker {
+          image 'maven:3.9-eclipse-temurin-21'
+          args '-v maven-repo:/root/.m2'
+          reuseNode true
         }
+      }
+      steps {
+        echo '🧪 Running Java Unit Tests...'
+        dir('manager') {
+          sh '''
+            set -e
+            mvn -B clean test \
+              -Dtest="**/unittests/**" \
+              -Dallure.results.directory=target/allure-results/unit
+          '''
+        }
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+        }
+      }
+    }
 
     stage('Start Application') {
       when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS } }
@@ -196,9 +211,9 @@ pipeline {
           set -e
 
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
-          docker exec ${APP_NAME}-test sh -lc "ls -la /data || true"
-          docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db && echo '✅ DB present in /data' || (echo '❌ DB missing in /data' && exit 1)"
+          docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db"
 
+          # Run API tests and write Allure to a stage-specific folder INSIDE container
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
@@ -211,8 +226,17 @@ pipeline {
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
               -DbaseUrl=http://localhost:'"${APP_PORT}"' \
+              -Dallure.results.directory=target/allure-results/api \
               -Dmaven.test.failure.ignore=true
           '
+
+          # ✅ Copy API allure-results OUT of container into Jenkins workspace
+          rm -rf ${ALLURE_API} || true
+          mkdir -p ${ALLURE_API}
+          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/api ${ALLURE_API} || true
+
+          echo "---- Allure API files ----"
+          ls -la ${ALLURE_API}/api || true
         '''
       }
       post {
@@ -222,20 +246,12 @@ pipeline {
       }
     }
 
-    // ✅ Chrome-only Selenium container (no Grid)
     stage('Start Selenium (Chrome)') {
       when { expression { !params.SKIP_E2E_TESTS } }
       steps {
         echo '🧩 Starting Selenium Standalone Chrome...'
         sh '''
           set -e
-
-          echo "SELENIUM_CONTAINER=${SELENIUM_CONTAINER}"
-          echo "SELENIUM_IMAGE=${SELENIUM_IMAGE}"
-          echo "TEST_NETWORK=${TEST_NETWORK}"
-
-          test -n "${SELENIUM_CONTAINER}" || (echo "❌ SELENIUM_CONTAINER is empty" && exit 1)
-          test -n "${SELENIUM_IMAGE}" || (echo "❌ SELENIUM_IMAGE is empty" && exit 1)
 
           docker rm -f "${SELENIUM_CONTAINER}" >/dev/null 2>&1 || true
 
@@ -252,8 +268,6 @@ pipeline {
           for i in $(seq 1 45); do
             if docker exec "${SELENIUM_CONTAINER}" sh -lc "wget -q --spider http://localhost:4444/wd/hub/status"; then
               echo "✅ Selenium is responding on /wd/hub/status"
-              echo "Status snippet:"
-              docker exec "${SELENIUM_CONTAINER}" sh -lc "wget -qO- http://localhost:4444/wd/hub/status | head -c 300" || true
               exit 0
             fi
             echo "⏳ Not ready yet (${i}/45)..."
@@ -274,7 +288,6 @@ pipeline {
         sh '''
           set -e
 
-          # ✅ From inside the app container, selenium should be reachable
           docker exec ${APP_NAME}-test sh -lc "wget -qO- http://${SELENIUM_CONTAINER}:4444/wd/hub/status | head -c 200"
 
           docker exec ${APP_NAME}-test sh -lc '
@@ -282,7 +295,6 @@ pipeline {
             cd '"${CONTAINER_WS}"'/manager
             rm -rf target || true
 
-            # ✅ IMPORTANT: browser runs in selenium container, so baseUrl must be the APP CONTAINER NAME
             export BASE_URL="http://'${APP_NAME}'-test:'"${APP_PORT}"'"
 
             mvn -B clean test \
@@ -290,8 +302,17 @@ pipeline {
               -DbaseUrl="${BASE_URL}" \
               -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
               -Dbrowser=chrome \
+              -Dallure.results.directory=target/allure-results/e2e \
               -Dmaven.test.failure.ignore=true
           '
+
+          # ✅ Copy E2E allure-results OUT of container into Jenkins workspace
+          rm -rf ${ALLURE_E2E} || true
+          mkdir -p ${ALLURE_E2E}
+          docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/e2e ${ALLURE_E2E} || true
+
+          echo "---- Allure E2E files ----"
+          ls -la ${ALLURE_E2E}/e2e || true
         '''
       }
       post {
@@ -321,6 +342,26 @@ pipeline {
       }
     }
 
+    stage('Generate Allure Report') {
+      when { expression { !params.SKIP_ALLURE } }
+      steps {
+        echo '📊 Publishing Allure Report (Unit + API + E2E)...'
+      }
+      post {
+        always {
+          // ✅ Publish from all stage folders
+          allure([
+            includeProperties: false,
+            results: [
+              [path: 'manager/target/allure-results/unit'],
+              [path: 'manager/target/allure-results/api'],
+              [path: 'manager/target/allure-results/e2e']
+            ]
+          ])
+        }
+      }
+    }
+
     stage('Deploy to QA') {
       when {
         allOf {
@@ -337,10 +378,6 @@ pipeline {
 
   post {
     always {
-    allure([
-                includeProperties: false,
-                results: [[path: 'manager/target/allure-results']]
-              ])
       echo '🧹 Cleaning up...'
       sh '''
         docker stop ${APP_NAME}-test || true
