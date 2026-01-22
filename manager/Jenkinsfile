@@ -15,6 +15,17 @@ pipeline {
 
     SEED_DB_PATH  = "manager/seed/expense_manager.db"
     DB_VOLUME     = "expense-data"
+
+    // ✅ Selenium Grid (Hub + Nodes) settings
+    SELENIUM_HUB           = "selenium-hub"
+    SELENIUM_HUB_IMAGE     = "selenium/hub:4.25.0"
+    SEL_NODE_CHROME        = "selenium-node-chrome"
+    SEL_NODE_FIREFOX       = "selenium-node-firefox"
+    SEL_NODE_EDGE          = "selenium-node-edge"
+    SEL_NODE_CHROME_IMAGE  = "selenium/node-chrome:4.25.0"
+    SEL_NODE_FIREFOX_IMAGE = "selenium/node-firefox:4.25.0"
+    SEL_NODE_EDGE_IMAGE    = "selenium/node-edge:4.25.0"
+    SELENIUM_REMOTE_URL    = "http://selenium-hub:4444/wd/hub"
   }
 
   options {
@@ -84,10 +95,39 @@ pipeline {
       }
     }
 
-    stage('Start Application') {
-      when { expression { !params.SKIP_API_TESTS } }
+    // ✅ ADDED: Unit tests stage (matches your folder: com.revature.unittests)
+    stage('Unit Tests') {
+      when { expression { !params.SKIP_UNIT_TESTS } }
       steps {
-        echo '🚀 Starting Manager App (testrunner image) for API Testing...'
+        echo "🧪 Running Java Unit Tests (com.revature.unittests...)"
+        sh '''
+          set -e
+
+          docker run --rm \
+            -v "$PWD":"${CONTAINER_WS}" \
+            -w "${CONTAINER_WS}/manager" \
+            ${APP_NAME}-testrunner:${BUILD_VERSION} \
+            sh -lc '
+              set -e
+              mvn -v
+              mvn -B clean test \
+                -Dtest="com.revature.unittests.**" \
+                -Dmaven.test.failure.ignore=true
+            '
+        '''
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
+        }
+      }
+    }
+
+    // ✅ CHANGED: start app if either API or E2E tests are enabled
+    stage('Start Application') {
+      when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS } }
+      steps {
+        echo '🚀 Starting Manager App (testrunner image) for Testing...'
         sh '''
           set -e
 
@@ -136,8 +176,9 @@ pipeline {
       }
     }
 
+    // ✅ CHANGED: sync repo if either API or E2E tests are enabled
     stage('Sync Repo Into App Container') {
-      when { expression { !params.SKIP_API_TESTS } }
+      when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS } }
       steps {
         echo '📦 Syncing repository into running app container...'
         sh '''
@@ -198,42 +239,69 @@ pipeline {
       }
     }
 
+    // ✅ FIXED: Selenium vars are defined + safe quoting + debug + fail-fast
     stage('Start Selenium Grid') {
       when { expression { !params.SKIP_E2E_TESTS } }
       steps {
         sh '''
           set -e
-          docker rm -f ${SELENIUM_HUB} ${SEL_NODE_CHROME} ${SEL_NODE_FIREFOX} ${SEL_NODE_EDGE} >/dev/null 2>&1 || true
 
-          docker run -d --name ${SELENIUM_HUB} --network ${TEST_NETWORK} -p 4444:4444 ${SELENIUM_HUB_IMAGE}
+          echo "SELENIUM_HUB=${SELENIUM_HUB}"
+          echo "SELENIUM_HUB_IMAGE=${SELENIUM_HUB_IMAGE}"
+          echo "TEST_NETWORK=${TEST_NETWORK}"
 
-          docker run -d --name ${SEL_NODE_CHROME} --network ${TEST_NETWORK} \
-            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
-            ${SEL_NODE_CHROME_IMAGE}
+          test -n "${SELENIUM_HUB}" || (echo "❌ SELENIUM_HUB is empty" && exit 1)
+          test -n "${SELENIUM_HUB_IMAGE}" || (echo "❌ SELENIUM_HUB_IMAGE is empty" && exit 1)
 
-          docker run -d --name ${SEL_NODE_FIREFOX} --network ${TEST_NETWORK} \
-            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
-            ${SEL_NODE_FIREFOX_IMAGE}
+          docker rm -f "${SELENIUM_HUB}" "${SEL_NODE_CHROME}" "${SEL_NODE_FIREFOX}" "${SEL_NODE_EDGE}" >/dev/null 2>&1 || true
 
-          docker run -d --name ${SEL_NODE_EDGE} --network ${TEST_NETWORK} \
-            -e SE_EVENT_BUS_HOST=${SELENIUM_HUB} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
-            ${SEL_NODE_EDGE_IMAGE}
+          docker run -d \
+            --name "${SELENIUM_HUB}" \
+            --network "${TEST_NETWORK}" \
+            -p 4444:4444 \
+            "${SELENIUM_HUB_IMAGE}"
+
+          docker run -d \
+            --name "${SEL_NODE_CHROME}" \
+            --network "${TEST_NETWORK}" \
+            -e SE_EVENT_BUS_HOST="${SELENIUM_HUB}" \
+            -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
+            -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            "${SEL_NODE_CHROME_IMAGE}"
+
+          docker run -d \
+            --name "${SEL_NODE_FIREFOX}" \
+            --network "${TEST_NETWORK}" \
+            -e SE_EVENT_BUS_HOST="${SELENIUM_HUB}" \
+            -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
+            -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            "${SEL_NODE_FIREFOX_IMAGE}"
+
+          docker run -d \
+            --name "${SEL_NODE_EDGE}" \
+            --network "${TEST_NETWORK}" \
+            -e SE_EVENT_BUS_HOST="${SELENIUM_HUB}" \
+            -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
+            -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+            "${SEL_NODE_EDGE_IMAGE}"
 
           echo "Waiting for Selenium hub..."
           for i in $(seq 1 30); do
-            if docker exec ${SELENIUM_HUB} sh -lc "wget -qO- http://localhost:4444/status | grep -q '\\"ready\\":true'"; then
+            if docker exec "${SELENIUM_HUB}" sh -lc "wget -qO- http://localhost:4444/status | grep -q '\\"ready\\":true'"; then
               echo "✅ Selenium Grid ready"
               exit 0
             fi
+            echo "⏳ Grid not ready yet (${i}/30)..."
             sleep 2
           done
 
-          docker logs ${SELENIUM_HUB} || true
+          docker logs "${SELENIUM_HUB}" || true
           exit 1
         '''
       }
     }
 
+    // ✅ Uses your runner class: com.revature.systemtests.selenium.runners.TestRunner
     stage('E2E Tests (Selenium)') {
       when { expression { !params.SKIP_E2E_TESTS } }
       parallel {
@@ -312,7 +380,7 @@ pipeline {
       when { expression { !params.SKIP_E2E_TESTS } }
       steps {
         sh '''
-          docker rm -f ${SELENIUM_HUB} ${SEL_NODE_CHROME} ${SEL_NODE_FIREFOX} ${SEL_NODE_EDGE} >/dev/null 2>&1 || true
+          docker rm -f "${SELENIUM_HUB}" "${SEL_NODE_CHROME}" "${SEL_NODE_FIREFOX}" "${SEL_NODE_EDGE}" >/dev/null 2>&1 || true
         '''
       }
     }
@@ -362,6 +430,8 @@ pipeline {
       sh '''
         docker stop ${APP_NAME}-test || true
         docker rm ${APP_NAME}-test || true
+
+        docker rm -f "${SELENIUM_HUB}" "${SEL_NODE_CHROME}" "${SEL_NODE_FIREFOX}" "${SEL_NODE_EDGE}" >/dev/null 2>&1 || true
 
         docker rmi ${APP_NAME}:${BUILD_VERSION} || true
         docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} || true
