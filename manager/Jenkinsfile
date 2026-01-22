@@ -86,10 +86,6 @@ pipeline {
             steps {
                 echo '🚀 Starting Manager App for Testing...'
                 sh '''
-                    # Stop any existing container
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-
                     # Start the container
                     docker run -d \
                         --name ${APP_NAME}-test \
