@@ -53,9 +53,9 @@ pipeline {
                 echo '🧪 Running Java Unit Tests with Allure...'
                 sh '''
                     docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
+                        -v ${WORKSPACE}:/app \
                         -v maven-repo:/root/.m2 \
-                        -w /app \
+                        -w /app/manager \
                         maven:3.9-eclipse-temurin-17 \
                         mvn clean test \
                         -Dtest="**/unit/**" \

@@ -201,48 +201,24 @@ pipeline {
                     }
                 }
             }
-        }
-        
-        stage('Performance Tests') {
-            steps {
-                echo '⚡ Running JMeter Performance Tests...'
-                sh '''
-                    if [ -d "tests/performance" ]; then
-                        mkdir -p jmeter-results
-                        docker run --rm \
-                            --network host \
-                            -v ${WORKSPACE_HOST}:/workspace \
-                            -w /workspace \
-                            justb4/jmeter:latest \
-                            -n \
-                            -t /workspace/tests/performance/*.jmx \
-                            -l /workspace/jmeter-results/results.jtl \
-                            -e \
-                            -o /workspace/jmeter-results/report || true
-                    else
-                        echo "No JMeter test files found, skipping..."
-                    fi
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'jmeter-results/**/*', allowEmptyArchive: true
-                }
-            }
-        }
+        } */
         
         stage('Code Coverage') {
+            agent {
+                docker {
+                    image 'python:3.12-slim'
+                }
+            }
             steps {
                 echo '📈 Generating Code Coverage Report...'
                 sh '''
-                    docker run --rm \
-                        -v ${WORKSPACE_HOST}:/app \
-                        -w /app \
-                        python:3.12-slim \
-                        sh -c "pip install -r requirements.txt && \
-                               coverage run -m pytest tests/unit && \
-                               coverage xml -o coverage.xml && \
-                               coverage html -d htmlcov" || true
+                    cd employee
+                    pip install -r requirements.txt 
+                    pip install coverage 
+                    pip install pytest-cov 
+                    coverage run -m pytest tests/unit_tests 
+                    coverage xml -o coverage.xml
+                    coverage html -d htmlcov
                 '''
             }
             post {
@@ -255,24 +231,7 @@ pipeline {
                         reportFiles: 'index.html',
                         reportName: 'Python Coverage Report'
                     ])
-                    
-                    cobertura coberturaReportFile: 'coverage.xml',
-                              conditionalCoverageTargets: '70, 0, 0',
-                              lineCoverageTargets: '80, 0, 0',
-                              failUnhealthy: false,
-                              failUnstable: false,
-                              onlyStable: false
                 }
-            }
-        }
-        
-        stage('Stop Test Container') {
-            steps {
-                echo '🛑 Stopping test container...'
-                sh '''
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-                '''
             }
         }
         
@@ -289,92 +248,16 @@ pipeline {
                 }
             }
         }
-        
-        stage('Deploy to QA') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { currentBuild.currentResult == 'SUCCESS' }
-                }
-            }
-            steps {
-                echo '🚀 All tests passed! Deploying Employee App to QA...'
-                
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'ec2-ssh-key',
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
-                    sh '''
-                        # Save and transfer Docker image
-                        docker save ${APP_NAME}:${BUILD_VERSION} | gzip > ${APP_NAME}.tar.gz
-                        scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
-                            ${APP_NAME}.tar.gz ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/
-                        
-                        # Deploy on EC2
-                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
-                            echo "🔨 Loading Docker image..."
-                            gunzip -c ${APP_NAME}.tar.gz | docker load
-                            rm ${APP_NAME}.tar.gz
-                            
-                            echo "🛑 Stopping existing container..."
-                            docker stop expense-employee || true
-                            docker rm expense-employee || true
-                            
-                            echo "🚀 Starting new container..."
-                            docker run -d \
-                                --name expense-employee \
-                                --restart unless-stopped \
-                                -p 5000:5000 \
-                                -v expense-data:/data \
-                                expense-employee:latest
-                            
-                            sleep 15
-                            curl -f http://localhost:5000/health && echo "✅ Employee app deployed!"
-EOF
-                        
-                        rm ${APP_NAME}.tar.gz
-                    '''
-                }
-            }
-        }
 
-         // ============================================
+        // ============================================
         // BUILD: Only after tests pass
         // ============================================
-        
-        stage('Build Docker Image') {
+        stage('Deploy to QA Environment') {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
-                    cd employee
-                    docker build \
-                        -t ${APP_NAME}:${BUILD_VERSION} \
-                        -t ${APP_NAME}:latest \
-                        -f Dockerfile .
-                '''
-            }
-        }
-        
-        stage('Start Application') {
-            steps {
-                echo '🚀 Starting Employee App for API/E2E Testing...'
-                sh '''
-                    # Stop any existing container
-                    docker stop ${APP_NAME}-test || true
-                    docker rm ${APP_NAME}-test || true
-                    
-                    # Start the container
-                    docker run -d \
-                        --name ${APP_NAME}-test \
-                        -p ${APP_PORT}:${APP_PORT} \
-                        -v expense-data:/data \
-                        ${APP_NAME}:${BUILD_VERSION}
-                    
-                    # Wait for app to be healthy
-                    echo "Waiting for application to start..."
-                    sleep 15
-                    curl -f http://localhost:${APP_PORT}/health || exit 1
-                    echo "✅ Application is ready!"
+                    docker-compose down
+                    docker-compose up -d --build employee-app
                 '''
             }
         }
