@@ -8,8 +8,10 @@ pipeline {
     APP_URL       = "http://localhost:${APP_PORT}"
     TEST_NETWORK  = "jenkins-test-network"
 
-    // ✅ writable path inside container (appuser owns it)
+    // Writable path inside container
     CONTAINER_WS  = "/home/appuser/workspace"
+    CONTAINER_UID = "1001"
+    CONTAINER_GID = "1001"
   }
 
   options {
@@ -130,26 +132,42 @@ pipeline {
       }
     }
 
-    // ✅ Copy repo into a writable directory owned by appuser
+    // ✅ Copy repo into container in a way appuser can write /target
     stage('Sync Repo Into App Container') {
-      when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS || !params.SKIP_CODE_COVERAGE } }
+      when { expression { !params.SKIP_API_TESTS } }
       steps {
-        echo '📦 Copying repository into running app container (docker cp)...'
+        echo '📦 Syncing repository into running app container...'
         sh '''
           set -e
 
-          # Clean and recreate inside container (writable)
-          docker exec ${APP_NAME}-test sh -lc "rm -rf ${CONTAINER_WS}/* && mkdir -p ${CONTAINER_WS}"
+          # 1) Prepare dirs as ROOT (so we can chown safely)
+          docker exec -u 0 ${APP_NAME}-test sh -lc "
+            rm -rf ${CONTAINER_WS} /tmp/repo &&
+            mkdir -p ${CONTAINER_WS} /tmp/repo
+          "
 
-          # Copy entire repo into container workspace
-          docker cp . ${APP_NAME}-test:${CONTAINER_WS}
+          # 2) Copy repo from Jenkins node -> /tmp/repo (likely root-owned)
+          docker cp . ${APP_NAME}-test:/tmp/repo
 
-          echo "---- Verify copy ----"
-          docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS} | head -n 200"
-          docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS}/manager | head -n 200"
+          # 3) Move into final location and chown to appuser
+          docker exec -u 0 ${APP_NAME}-test sh -lc "
+            rm -rf ${CONTAINER_WS}/* &&
+            cp -R /tmp/repo/. ${CONTAINER_WS}/ &&
+            chown -R ${CONTAINER_UID}:${CONTAINER_GID} ${CONTAINER_WS} &&
+            rm -rf /tmp/repo
+          "
 
-          # Ensure pom exists
+          echo "---- Verify copy + ownership ----"
+          docker exec ${APP_NAME}-test sh -lc "id && ls -la ${CONTAINER_WS} | head -n 50"
+          docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS}/manager | head -n 50"
           docker exec ${APP_NAME}-test sh -lc "test -f ${CONTAINER_WS}/manager/pom.xml && echo '✅ pom.xml present' || (echo '❌ pom.xml missing' && exit 1)"
+
+          # Ensure target dir is writable (prevents resources plugin failure)
+          docker exec ${APP_NAME}-test sh -lc "
+            mkdir -p ${CONTAINER_WS}/manager/target &&
+            touch ${CONTAINER_WS}/manager/target/.write_test &&
+            rm -f ${CONTAINER_WS}/manager/target/.write_test
+          "
         '''
       }
     }
@@ -167,7 +185,10 @@ pipeline {
             set -e
             cd '"${CONTAINER_WS}"'/manager
 
-            mvn -B test \
+            # Clean target to remove any root-owned leftovers if any
+            rm -rf target || true
+
+            mvn -B clean test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
               -DbaseUrl=http://localhost:'"${APP_PORT}"' \
