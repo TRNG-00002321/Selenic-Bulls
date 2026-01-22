@@ -1,6 +1,3 @@
-// Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
-// Option B: Run API tests INSIDE the SAME running app container (no separate test docker container)
-
 pipeline {
   agent any
 
@@ -9,7 +6,6 @@ pipeline {
     APP_PORT      = '5001'
     BUILD_VERSION = "${BUILD_NUMBER}"
 
-    // Used for host-based checks; inside the app container we'll use localhost:${APP_PORT}
     APP_URL = "http://localhost:${APP_PORT}"
   }
 
@@ -68,16 +64,27 @@ pipeline {
     }
 
     // ============================================
-    // BUILD IMAGE (before API/E2E that hit app)
+    // BUILD IMAGES
+    // - runtime image: production style
+    // - testrunner image: contains mvn + JDK for Option B
     // ============================================
-    stage('Build Docker Image') {
+    stage('Build Docker Images') {
       steps {
-        echo '☕ Building Java Manager Docker image...'
+        echo '☕ Building Java Manager Docker images...'
         dir('manager') {
           sh '''
+            set -e
+
+            # Build production/runtime image (default final stage)
             docker build \
               -t ${APP_NAME}:${BUILD_VERSION} \
               -t ${APP_NAME}:latest \
+              -f Dockerfile .
+
+            # Build test runner image (target testrunner)
+            docker build \
+              --target testrunner \
+              -t ${APP_NAME}-testrunner:${BUILD_VERSION} \
               -f Dockerfile .
           '''
         }
@@ -85,39 +92,36 @@ pipeline {
     }
 
     // ============================================
-    // START APP (and mount workspace into it)
+    // START APP (using testrunner image so mvn exists)
     // ============================================
     stage('Start Application') {
       steps {
-        echo '🚀 Starting Manager App for API/E2E Testing...'
+        echo '🚀 Starting Manager App (testrunner image) for API/E2E Testing...'
         sh '''
           set -e
 
-          # Create custom network for test containers (still fine even if you don't use separate test containers)
           docker network create jenkins-test-network || true
 
-          # Clean up old containers
           docker stop ${APP_NAME}-test || true
           docker rm ${APP_NAME}-test || true
 
-          # Remove old volume to ensure clean state
           docker volume rm expense-data || true
           docker volume create expense-data
 
-          # Start app on custom network and mount workspace (so we can run mvn inside the same container)
+          # Start app in the SAME container we'll run mvn inside
           docker run -d \
             --name ${APP_NAME}-test \
             --network jenkins-test-network \
             -p ${APP_PORT}:${APP_PORT} \
             -v expense-data:/data \
             -v "${WORKSPACE}/manager:/workspace/manager" \
-            ${APP_NAME}:${BUILD_VERSION}
+            ${APP_NAME}-testrunner:${BUILD_VERSION}
 
           echo "Waiting for application health (inside container)..."
           for i in $(seq 1 30); do
             if docker exec ${APP_NAME}-test sh -lc "wget -q --spider http://localhost:${APP_PORT}/health"; then
               echo "✅ Application is healthy!"
-              sleep 3
+              sleep 2
               exit 0
             fi
             echo "⏳ Not ready yet (${i}/30)..."
@@ -131,9 +135,9 @@ pipeline {
       }
     }
 
-    // ==========================================================
-    // API TESTS (Option B): Run INSIDE the SAME running app container
-    // ==========================================================
+    // ============================================
+    // API TESTS (Option B): inside SAME app container
+    // ============================================
     stage('API Tests') {
       when { expression { !params.SKIP_API_TESTS } }
       steps {
@@ -141,13 +145,10 @@ pipeline {
         sh '''
           set -e
 
-          # IMPORTANT:
-          # This assumes the running app image has:
-          # - a shell (sh)
-          # - mvn installed
-          # - a JDK available
-          #
-          # If mvn isn't in the image, this will fail.
+          # Sanity check (helps debug quickly)
+          docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
+
+          # Run tests against localhost from inside the same container
           docker exec ${APP_NAME}-test sh -lc '
             cd /workspace/manager && \
             mvn -B test \
@@ -166,9 +167,7 @@ pipeline {
     }
 
     // ============================================
-    // E2E TESTS (still run via maven container)
-    // NOTE: If you ALSO want E2E in same app container,
-    // you can mirror the API Tests approach.
+    // E2E TESTS (kept as you had it, running in Maven container)
     // ============================================
     stage('E2E Tests') {
       when { expression { !params.SKIP_E2E_TESTS } }
@@ -273,7 +272,9 @@ pipeline {
       sh '''
         docker stop ${APP_NAME}-test || true
         docker rm ${APP_NAME}-test || true
+
         docker rmi ${APP_NAME}:${BUILD_VERSION} || true
+        docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} || true
       '''
 
       archiveArtifacts artifacts: '''
