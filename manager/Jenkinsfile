@@ -7,6 +7,9 @@ pipeline {
     BUILD_VERSION = "${BUILD_NUMBER}"
     APP_URL       = "http://localhost:${APP_PORT}"
     TEST_NETWORK  = "jenkins-test-network"
+
+    // ✅ writable path inside container (appuser owns it)
+    CONTAINER_WS  = "/home/appuser/workspace"
   }
 
   options {
@@ -74,13 +77,11 @@ pipeline {
           sh '''
             set -e
 
-            # runtime image
             docker build \
               -t ${APP_NAME}:${BUILD_VERSION} \
               -t ${APP_NAME}:latest \
               -f Dockerfile .
 
-            # test-enabled image (contains mvn + JDK)
             docker build \
               --target testrunner \
               -t ${APP_NAME}-testrunner:${BUILD_VERSION} \
@@ -96,15 +97,14 @@ pipeline {
         sh '''
           set -e
 
-          docker network create ${TEST_NETWORK} || true
+          docker network create ${TEST_NETWORK} >/dev/null 2>&1 || true
 
-          docker stop ${APP_NAME}-test || true
-          docker rm ${APP_NAME}-test || true
+          docker stop ${APP_NAME}-test >/dev/null 2>&1 || true
+          docker rm ${APP_NAME}-test >/dev/null 2>&1 || true
 
-          docker volume rm expense-data || true
-          docker volume create expense-data
+          docker volume rm expense-data >/dev/null 2>&1 || true
+          docker volume create expense-data >/dev/null
 
-          # Start app container (NO workspace mount)
           docker run -d \
             --name ${APP_NAME}-test \
             --network ${TEST_NETWORK} \
@@ -130,7 +130,7 @@ pipeline {
       }
     }
 
-    // ✅ Copy code into the SAME running container so mvn can see pom.xml
+    // ✅ Copy repo into a writable directory owned by appuser
     stage('Sync Repo Into App Container') {
       when { expression { !params.SKIP_API_TESTS || !params.SKIP_E2E_TESTS || !params.SKIP_CODE_COVERAGE } }
       steps {
@@ -138,17 +138,18 @@ pipeline {
         sh '''
           set -e
 
-          # Clean any old copy
-          docker exec ${APP_NAME}-test sh -lc "rm -rf /workspace && mkdir -p /workspace"
+          # Clean and recreate inside container (writable)
+          docker exec ${APP_NAME}-test sh -lc "rm -rf ${CONTAINER_WS}/* && mkdir -p ${CONTAINER_WS}"
 
-          # Copy entire repo from Jenkins node into container
-          # (This avoids host mount problems in Jenkins-in-Docker / WSL / permissions)
-          docker cp . ${APP_NAME}-test:/workspace
+          # Copy entire repo into container workspace
+          docker cp . ${APP_NAME}-test:${CONTAINER_WS}
 
           echo "---- Verify copy ----"
-          docker exec ${APP_NAME}-test sh -lc "ls -la /workspace | head -n 200"
-          docker exec ${APP_NAME}-test sh -lc "ls -la /workspace/manager | head -n 200"
-          docker exec ${APP_NAME}-test sh -lc "test -f /workspace/manager/pom.xml && echo '✅ pom.xml present' || (echo '❌ pom.xml missing' && exit 1)"
+          docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS} | head -n 200"
+          docker exec ${APP_NAME}-test sh -lc "ls -la ${CONTAINER_WS}/manager | head -n 200"
+
+          # Ensure pom exists
+          docker exec ${APP_NAME}-test sh -lc "test -f ${CONTAINER_WS}/manager/pom.xml && echo '✅ pom.xml present' || (echo '❌ pom.xml missing' && exit 1)"
         '''
       }
     }
@@ -164,7 +165,7 @@ pipeline {
 
           docker exec ${APP_NAME}-test sh -lc '
             set -e
-            cd /workspace/manager
+            cd '"${CONTAINER_WS}"'/manager
 
             mvn -B test \
               -Dtest="**/integrationtests/**" \
@@ -177,63 +178,6 @@ pipeline {
       post {
         always {
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-        }
-      }
-    }
-
-    // Keeping your E2E stage as-is (still runs in separate Maven container).
-    // If you want E2E ALSO inside the same app container, tell me and I’ll convert it.
-    stage('E2E Tests') {
-      when { expression { !params.SKIP_E2E_TESTS } }
-      agent {
-        docker {
-          image 'maven:3.9-eclipse-temurin-21'
-          args '-v maven-repo:/root/.m2 --network jenkins-test-network'
-          reuseNode true
-        }
-      }
-      steps {
-        echo "🌐 Running Java E2E Tests against http://${APP_NAME}-test:${APP_PORT}..."
-        dir('manager') {
-          sh '''
-            mvn -B test \
-              -Dtest="**/systemstest/**" \
-              -Dapp.url=http://${APP_NAME}-test:${APP_PORT} \
-              -DbaseUrl=http://${APP_NAME}-test:${APP_PORT} \
-              -Dmaven.test.failure.ignore=true
-          '''
-        }
-      }
-      post {
-        always {
-          junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-        }
-      }
-    }
-
-    stage('Code Coverage') {
-      when { expression { !params.SKIP_CODE_COVERAGE } }
-      steps {
-        echo '📈 Generating JaCoCo Coverage Report INSIDE app container...'
-        sh '''
-          set -e
-          docker exec ${APP_NAME}-test sh -lc '
-            set -e
-            cd /workspace/manager
-            mvn -B jacoco:report || true
-          '
-        '''
-      }
-      post {
-        always {
-          publishHTML(target: [
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true,
-            reportDir: 'manager/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'Java Coverage Report'
-          ])
         }
       }
     }

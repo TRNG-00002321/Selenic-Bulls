@@ -61,6 +61,7 @@ ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 # =========================
 # Test runner stage (Option B)
 # Contains mvn + JDK and runs the same app jar
+# Adds a writable workspace folder for appuser
 # =========================
 FROM maven:3.9-eclipse-temurin-21 AS testrunner
 
@@ -69,7 +70,7 @@ WORKDIR /app
 # Install wget for health checks (Debian-based image)
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user similar to runtime (good practice)
+# Create non-root user similar to runtime
 RUN groupadd -g 1001 appgroup && useradd -m -u 1001 -g appgroup appuser
 
 # Copy jar built by builder
@@ -78,6 +79,9 @@ COPY --from=builder /app/target/manager-1.0-SNAPSHOT.jar /app/app.jar
 # Create data directory for DB volume
 RUN mkdir -p /data && chown -R appuser:appgroup /data
 
+# ✅ Create a writable workspace under appuser home
+RUN mkdir -p /home/appuser/workspace && chown -R appuser:appgroup /home/appuser/workspace
+
 USER appuser
 
 ENV JAVA_OPTS="-Xms256m -Xmx512m"
@@ -85,5 +89,5 @@ ENV DATABASE_PATH=/data/expense_manager.db
 
 EXPOSE 5001
 
-# Keep it simple: run app (Jenkins will docker exec into this container to run mvn tests)
+# Run the app (Jenkins will docker exec to run mvn in /home/appuser/workspace)
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
