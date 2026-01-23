@@ -1,7 +1,8 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
 // QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
 // + Deploy to QA (Docker)
-// STRICT CI: test failures FAIL the pipeline; deploy runs only on SUCCESS.
+// STRICT CI: test failures FAIL the pipeline; deploy runs only on SUCCESS/UNSTABLE.
+// FIX #1: Branch resolution falls back to `git rev-parse --abbrev-ref HEAD` when BRANCH_NAME/GIT_BRANCH are null.
 
 pipeline {
   agent any
@@ -80,6 +81,10 @@ pipeline {
           echo "---- Workspace ----"
           pwd
           ls -la
+
+          echo "---- Git debug ----"
+          git rev-parse --abbrev-ref HEAD || true
+          git branch -av || true
 
           echo "---- manager/seed ----"
           ls -la manager/seed || true
@@ -455,6 +460,7 @@ pipeline {
       }
     }
 
+    // Optional: keep this stage for visibility, but now it also uses Fix #1 branch resolution
     stage('Debug Deploy Gate') {
       steps {
         script {
@@ -464,7 +470,10 @@ pipeline {
           echo "SKIP_DEPLOY param=${params.SKIP_DEPLOY}"
           echo "currentBuild.currentResult=${currentBuild.currentResult}"
         }
-        sh 'git rev-parse --abbrev-ref HEAD || true'
+        sh '''
+          echo "git rev-parse --abbrev-ref HEAD:"
+          git rev-parse --abbrev-ref HEAD || true
+        '''
       }
     }
 
@@ -473,16 +482,23 @@ pipeline {
         allOf {
           expression { !(params.SKIP_DEPLOY?.toBoolean()) }
 
+          // ✅ FIX #1 APPLIED HERE:
+          // If BRANCH_NAME/GIT_BRANCH are null, resolve branch via git.
           expression {
-            def raw = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: "")
-            def b = raw
+            def b = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: "").trim()
+            if (!b) {
+              b = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+            }
+
+            // Normalize common formats
+            b = b
               .replaceFirst(/^origin\//, '')
               .replaceFirst(/^refs\/heads\//, '')
               .replaceFirst(/^refs\/remotes\/origin\//, '')
               .replaceFirst(/^\*\//, '')
               .trim()
 
-            echo "DEBUG Deploy when: BRANCH_NAME='${env.BRANCH_NAME}', GIT_BRANCH='${env.GIT_BRANCH}', raw='${raw}', normalized='${b}'"
+            echo "DEBUG Deploy when: resolved branch='${b}' (BRANCH_NAME='${env.BRANCH_NAME}', GIT_BRANCH='${env.GIT_BRANCH}')"
             return ['main','master','nikhil-21'].contains(b)
           }
 
