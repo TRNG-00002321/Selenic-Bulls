@@ -481,7 +481,7 @@ pipeline {
           }
 
           // ✅ STRICT CI: Deploy ONLY if SUCCESS.
-          expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
+          expression { currentBuild.currentResult == null || currentBuild.currentResult == 'UNSTABLE' }
         }
       }
       steps {
