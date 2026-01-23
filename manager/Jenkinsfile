@@ -469,24 +469,27 @@ pipeline {
     }
 
     stage('Deploy to QA (Docker)') {
-      when
-      {
+      when {
         allOf {
-          expression { !params.SKIP_DEPLOY }
+          expression { !(params.SKIP_DEPLOY?.toBoolean()) }
 
-          // More robust branch detection: prefer BRANCH_NAME (multibranch), fall back to GIT_BRANCH.
-          // Allow main/master/nikhil-21 in several common forms (e.g. 'main', 'origin/main', 'origin/master').
           expression {
-            def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: "")
-            return branch == 'main' || branch == 'master' || branch == 'nikhil-21' || branch.endsWith('/main') || branch.endsWith('/master') || branch.endsWith('/nikhil-21')
+            def raw = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: "")
+            def b = raw
+              .replaceFirst(/^origin\//, '')
+              .replaceFirst(/^refs\/heads\//, '')
+              .replaceFirst(/^refs\/remotes\/origin\//, '')
+              .replaceFirst(/^\*\//, '')
+              .trim()
+
+            echo "DEBUG Deploy when: BRANCH_NAME='${env.BRANCH_NAME}', GIT_BRANCH='${env.GIT_BRANCH}', raw='${raw}', normalized='${b}'"
+            return ['main','master','nikhil-21'].contains(b)
           }
 
-          // STRICT CI: Deploy ONLY if SUCCESS. currentBuild.currentResult is often null while running,
-          // so allow null (in-progress) or explicit SUCCESS. Previous code checked for 'UNSTABLE' which
-          // unintentionally skipped deploy when the build was SUCCESS.
           expression {
             def r = currentBuild.currentResult
-            return r == null || r == 'SUCCESS' || r == 'UNSTABLE'
+            echo "DEBUG Deploy when: currentBuild.currentResult='${r}', currentBuild.result='${currentBuild.result}'"
+            return r == null || r in ['SUCCESS','UNSTABLE']
           }
         }
       }
