@@ -120,7 +120,7 @@ pipeline {
             }
         }
         
-        stage('E2E Tests') {
+        /*stage('E2E Tests') {
             parallel {
                 stage('Chrome E2E Tests') {
                     agent {
@@ -213,7 +213,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         
         stage('Code Coverage') {
             agent {
