@@ -60,25 +60,23 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    rm -rf employee/allure-results
-                    mkdir -p employee/test-results employee/allure-results
+                    mkdir -p test-results allure-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
-                        --alluredir=employee/allure-results \
-                        --junitxml=employee/test-results/unit-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/unit-results.xml
                 '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'employee/test-results/*.xml'
+                    junit allowEmptyResults: true, testResults: 'test-results/*.xml'
                 }
             }
         }
@@ -87,14 +85,13 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
                 }
             }
             steps {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p employee/test-results employee/allure-results
+                    mkdir -p test-results allure-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
@@ -103,8 +100,8 @@ pipeline {
                     
                     # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
-                        --alluredir=employee/allure-results \
-                        --junitxml=employee/test-results/integration-results.xml
+                        --alluredir=allure-results \
+                        --junitxml=test-results/integration-results.xml
                     
                     # Kill the background app process
                     kill $APP_PID || true
@@ -112,7 +109,7 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'employee/test-results/integration-results.xml'
+                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
                 }
             }
         }
@@ -265,7 +262,7 @@ pipeline {
             echo '📊 Generating Allure Report...'
             allure([
                         includeProperties: false,
-                        results: [[path: 'employee/allure-results']]
+                        results: [[path: '${WORKSPACE}/employee/allure-results']]
                     ])
             
             echo '🧹 Cleaning up...'
@@ -276,9 +273,9 @@ pipeline {
             '''
             
             archiveArtifacts artifacts: '''
-                employee/test-results/**/*.xml,
-                employee/allure-results/**/*,
-                employee/htmlcov/**/*
+                test-results/**/*.xml,
+                allure-results/**/*,
+                htmlcov/**/*
             ''', allowEmptyArchive: true
         }
         
