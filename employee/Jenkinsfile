@@ -273,7 +273,9 @@ pipeline {
                 echo '📊 Generating Allure Report...'
                 allure([
                             includeProperties: false,
-                            results: [[path: 'allure-results']]
+                            results: [
+                                [path: 'allure-results/unit'],
+                                [path: 'allure-results/integration']]
                         ])
 
                 echo '🧹 Cleaning up...'
