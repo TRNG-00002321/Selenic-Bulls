@@ -1,6 +1,10 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
-// QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
-// + Deploy to QA (Docker)
+// QA Environment with Comprehensive Testing
+// ✅ Unit + API + E2E
+// ✅ Allure: per-type results + Combined report in Jenkins
+// ✅ JaCoCo: publish coverage (requires JaCoCo plugin OR archives HTML report)
+// ✅ Cucumber: publish feature report (requires Cucumber Reports plugin OR archives JSON/HTML)
+// ✅ Deploy to QA ONLY when build result is SUCCESS (no UNSTABLE)
 
 pipeline {
   agent any
@@ -30,16 +34,21 @@ pipeline {
     ALLURE_API  = "manager/target/allure-results/api"
     ALLURE_E2E  = "manager/target/allure-results/e2e"
 
-    // ✅ Generated HTML reports (per-type + combined)
+    // ✅ Generated HTML reports (optional archives; Jenkins UI report is via Allure plugin)
     ALLURE_HTML_ROOT   = "allure-html"
     ALLURE_HTML_UNIT   = "allure-html/unit"
     ALLURE_HTML_API    = "allure-html/api"
     ALLURE_HTML_E2E    = "allure-html/e2e"
-    ALLURE_HTML_ALL    = "allure-html/combined"
 
     // ✅ Allure CLI (downloaded locally if not present)
     ALLURE_VERSION = "2.27.0"
     ALLURE_HOME    = ".allure/allure-${ALLURE_VERSION}"
+
+    // ✅ Cucumber outputs (host + container)
+    CUCUMBER_HOST_DIR   = "manager/target/cucumber"
+    CUCUMBER_HOST_JSON  = "manager/target/cucumber/cucumber.json"
+    CUCUMBER_CONT_DIR   = "${CONTAINER_WS}/manager/target/cucumber"
+    CUCUMBER_CONT_JSON  = "${CONTAINER_WS}/manager/target/cucumber/cucumber.json"
 
     // ✅ QA deploy container
     QA_CONTAINER   = "${APP_NAME}-qa"
@@ -50,7 +59,7 @@ pipeline {
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
     timestamps()
-    timeout(time: 60, unit: 'MINUTES')
+    timeout(time: 75, unit: 'MINUTES')
   }
 
   parameters {
@@ -130,6 +139,7 @@ pipeline {
           sh '''
             set -e
             rm -rf target/allure-results || true
+            rm -rf target/site/jacoco || true
             mvn -B clean test -Dtest="**/unittests/**"
           '''
         }
@@ -149,6 +159,7 @@ pipeline {
       }
       post {
         always {
+          // NOTE: If any tests failed, this marks build UNSTABLE -> deploy will not run (as requested).
           junit allowEmptyResults: true, testResults: 'manager/target/surefire-reports/*.xml'
         }
       }
@@ -258,12 +269,12 @@ pipeline {
             # ✅ Force Allure results dir for API stage (ABSOLUTE)
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
 
+            # ✅ IMPORTANT: DO NOT ignore failures (so build becomes UNSTABLE/SUCCESS correctly)
             mvn -B clean test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
               -DbaseUrl=http://localhost:'"${APP_PORT}"' \
-              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/api" \
-              -Dmaven.test.failure.ignore=true
+              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
           '
 
           # ✅ Copy API allure results OUT of container into Jenkins workspace
@@ -278,7 +289,7 @@ pipeline {
       }
       post {
         always {
-          // If tests fail, this typically marks build UNSTABLE (which will block Deploy stage below).
+          // If any tests failed, this marks build UNSTABLE -> deploy will not run (as requested).
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
@@ -335,6 +346,12 @@ pipeline {
             mkdir -p ${CONTAINER_WS}/manager/target/allure-results/e2e
           "
 
+          # ✅ Clean cucumber output INSIDE container
+          docker exec ${APP_NAME}-test sh -lc "
+            rm -rf ${CUCUMBER_CONT_DIR} || true
+            mkdir -p ${CUCUMBER_CONT_DIR}
+          "
+
           docker exec ${APP_NAME}-test sh -lc '
             set -e
             cd '"${CONTAINER_WS}"'/manager
@@ -346,13 +363,16 @@ pipeline {
             # ✅ Force Allure results dir for E2E stage (ABSOLUTE)
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
 
+            # ✅ Try to force cucumber JSON output to a known path
+            # This works for many setups; if your project already configures plugins in code/pom,
+            # the runner config will still apply. Worst case: you'll still get your existing cucumber output.
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
               -DbaseUrl="${BASE_URL}" \
               -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
               -Dbrowser=chrome \
               -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e" \
-              -Dmaven.test.failure.ignore=true
+              -Dcucumber.plugin="pretty, json:'"${CUCUMBER_CONT_JSON}"'"
           '
 
           # ✅ Copy E2E allure results OUT of container into Jenkins workspace
@@ -363,6 +383,21 @@ pipeline {
           echo "---- Allure E2E files (host) ----"
           ls -la "${ALLURE_E2E}" || true
           echo -n "E2E json count (host): "; find "${ALLURE_E2E}" -type f -name "*.json" | wc -l || true
+
+          # ✅ Copy Cucumber outputs OUT of container into Jenkins workspace
+          rm -rf "${CUCUMBER_HOST_DIR}" || true
+          mkdir -p "${CUCUMBER_HOST_DIR}"
+          docker cp ${APP_NAME}-test:${CUCUMBER_CONT_DIR}/. "${CUCUMBER_HOST_DIR}" >/dev/null 2>&1 || true
+
+          echo "---- Cucumber outputs (host) ----"
+          ls -la "${CUCUMBER_HOST_DIR}" || true
+          if [ -f "${CUCUMBER_HOST_JSON}" ]; then
+            echo "✅ Found cucumber.json at ${CUCUMBER_HOST_JSON}"
+          else
+            echo "⚠️ cucumber.json not found at ${CUCUMBER_HOST_JSON} (your runner may be writing elsewhere)"
+            echo "Searching for cucumber json under manager/target..."
+            find manager/target -maxdepth 4 -type f -name "*cucumber*.json" -print || true
+          fi
         '''
       }
       post {
@@ -393,76 +428,32 @@ pipeline {
     }
 
     // -----------------------------
-    // Allure Reports (Per Type + Combined)
+    // Reports (Allure + JaCoCo + Cucumber)
     // -----------------------------
-    stage('Generate Allure HTML Reports (Unit/API/E2E/Combined)') {
+    stage('Publish Reports (Allure + JaCoCo + Cucumber)') {
       when { expression { !params.SKIP_ALLURE } }
       steps {
-        echo '📊 Generating Allure HTML reports (per type + combined)...'
+        echo '📊 Publishing reports...'
         sh '''
           set -e
 
-          # Sanity check results exist
-          echo "---- Results sanity check ----"
-          echo -n "UNIT json: "; find "${ALLURE_UNIT}" -type f -name "*.json" 2>/dev/null | wc -l || true
-          echo -n "API  json: "; find "${ALLURE_API}"  -type f -name "*.json" 2>/dev/null | wc -l || true
-          echo -n "E2E  json: "; find "${ALLURE_E2E}"  -type f -name "*.json" 2>/dev/null | wc -l || true
+          echo "---- Pre-Publish Sanity Check (host) ----"
+          echo "UNIT:"; ls -la manager/target/allure-results/unit || true
+          echo "API:";  ls -la manager/target/allure-results/api  || true
+          echo "E2E:";  ls -la manager/target/allure-results/e2e  || true
 
-          # Download Allure CLI locally if missing
-          if [ ! -x "${ALLURE_HOME}/bin/allure" ]; then
-            echo "Downloading Allure CLI ${ALLURE_VERSION}..."
-            mkdir -p .allure
-            rm -rf "${ALLURE_HOME}" || true
-            curl -fsSL -o .allure/allure.zip "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip"
-            unzip -q .allure/allure.zip -d .allure
-            chmod +x "${ALLURE_HOME}/bin/allure" || true
-          fi
+          echo "json counts:"
+          echo -n "UNIT: "; find manager/target/allure-results/unit -type f -name "*.json" | wc -l || true
+          echo -n "API:  "; find manager/target/allure-results/api  -type f -name "*.json" | wc -l || true
+          echo -n "E2E:  "; find manager/target/allure-results/e2e  -type f -name "*.json" | wc -l || true
 
-          rm -rf "${ALLURE_HTML_ROOT}" || true
-          mkdir -p "${ALLURE_HTML_UNIT}" "${ALLURE_HTML_API}" "${ALLURE_HTML_E2E}" "${ALLURE_HTML_ALL}"
-
-          # Generate per-type HTML reports (only if that folder has json)
-          if find "${ALLURE_UNIT}" -type f -name "*.json" | grep -q .; then
-            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_UNIT}" -o "${ALLURE_HTML_UNIT}" --clean
-          else
-            echo "No UNIT allure json found; skipping UNIT HTML."
-          fi
-
-          if find "${ALLURE_API}" -type f -name "*.json" | grep -q .; then
-            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_API}" -o "${ALLURE_HTML_API}" --clean
-          else
-            echo "No API allure json found; skipping API HTML."
-          fi
-
-          if find "${ALLURE_E2E}" -type f -name "*.json" | grep -q .; then
-            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_E2E}" -o "${ALLURE_HTML_E2E}" --clean
-          else
-            echo "No E2E allure json found; skipping E2E HTML."
-          fi
-
-          # Combined report (include all results folders that exist)
-          COMBINED_INPUTS=""
-          [ -d "${ALLURE_UNIT}" ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_UNIT}"
-          [ -d "${ALLURE_API}"  ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_API}"
-          [ -d "${ALLURE_E2E}"  ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_E2E}"
-
-          if echo "${COMBINED_INPUTS}" | grep -q "[^ ]"; then
-            "${ALLURE_HOME}/bin/allure" generate ${COMBINED_INPUTS} -o "${ALLURE_HTML_ALL}" --clean
-          else
-            echo "No inputs for combined report."
-          fi
-
-          echo "---- Generated HTML folders ----"
-          ls -la "${ALLURE_HTML_ROOT}" || true
+          echo "---- Cucumber (host) ----"
+          ls -la "${CUCUMBER_HOST_DIR}" || true
         '''
       }
       post {
         always {
-          // Archive HTML reports so you have separate Unit/API/E2E HTML outputs per build
-          archiveArtifacts artifacts: 'allure-html/**', allowEmptyArchive: true
-
-          // Also publish ONE Allure report in Jenkins UI (combined)
-          // (Jenkins Allure plugin typically publishes a single "Allure Report" action.)
+          // ✅ 1) Publish ONE combined Allure report in Jenkins UI
           allure([
             includeProperties: false,
             results: [
@@ -471,20 +462,51 @@ pipeline {
               [path: 'manager/target/allure-results/e2e']
             ]
           ])
+
+          // ✅ 2) Archive Cucumber outputs so you always have them, even if plugin isn't installed
+          archiveArtifacts artifacts: 'manager/target/cucumber/**', allowEmptyArchive: true
+
+          // ✅ 3) Publish Cucumber report in Jenkins if the Cucumber Reports plugin is installed
+          // (If the plugin is missing, this won't break the pipeline.)
+          script {
+            try {
+              // Most Jenkins Cucumber plugins look for JSON files under the workspace
+              cucumber buildStatus: 'UNSTABLE', fileIncludePattern: '**/target/cucumber/*.json'
+            } catch (Exception e) {
+              echo "ℹ️ Cucumber publisher not available or failed: ${e.getMessage()}"
+            }
+          }
+
+          // ✅ 4) JaCoCo: generate HTML report (if plugin configured in pom) + archive it
+          // If your pom already generates JaCoCo automatically, this folder will exist after tests:
+          // manager/target/site/jacoco
+          archiveArtifacts artifacts: 'manager/target/site/jacoco/**', allowEmptyArchive: true
+
+          // ✅ 5) Publish JaCoCo in Jenkins if JaCoCo plugin is installed and jacoco.exec exists
+          script {
+            try {
+              jacoco(
+                execPattern: 'manager/target/*.exec, manager/target/jacoco.exec',
+                classPattern: 'manager/target/classes',
+                sourcePattern: 'manager/src/main/java',
+                changeBuildStatus: true
+              )
+            } catch (Exception e) {
+              echo "ℹ️ JaCoCo publisher not available or failed: ${e.getMessage()}"
+            }
+          }
         }
       }
     }
 
     // -----------------------------
-    // Deploy to QA (Docker)
+    // Deploy to QA (Docker) - ONLY on SUCCESS (your requirement)
     // -----------------------------
     stage('Deploy to QA') {
       when {
         allOf {
           expression { !params.SKIP_DEPLOY }
           branch 'main'
-          // Allow deploy only if build has not been marked bad, or is SUCCESS.
-          // If tests fail, junit usually marks UNSTABLE -> deploy will skip.
           expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
         }
       }
@@ -493,17 +515,13 @@ pipeline {
         sh '''
           set -e
 
-          # Create QA volume if needed (do NOT wipe QA DB on each deploy)
           docker volume create "${QA_DB_VOLUME}" >/dev/null
 
-          # Stop/remove existing QA container
           docker stop "${QA_CONTAINER}" >/dev/null 2>&1 || true
           docker rm   "${QA_CONTAINER}" >/dev/null 2>&1 || true
 
-          # Ensure network exists (optional)
           docker network create "${TEST_NETWORK}" >/dev/null 2>&1 || true
 
-          # Run QA container
           docker run -d \
             --name "${QA_CONTAINER}" \
             --restart unless-stopped \
@@ -512,7 +530,6 @@ pipeline {
             -v "${QA_DB_VOLUME}:/data" \
             ${APP_NAME}:${BUILD_VERSION}
 
-          # Wait for QA health
           echo "Waiting for QA health..."
           for i in $(seq 1 40); do
             if docker exec "${QA_CONTAINER}" sh -lc "wget -q --spider http://localhost:${APP_PORT}/health"; then
@@ -540,9 +557,8 @@ pipeline {
 
         docker rm -f "${SELENIUM_CONTAINER}" >/dev/null 2>&1 || true
 
-        # Optionally keep built images for debugging; uncomment to delete
         docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} >/dev/null 2>&1 || true
-        # docker rmi ${APP_NAME}:${BUILD_VERSION} >/dev/null 2>&1 || true
+        # Keep ${APP_NAME}:${BUILD_VERSION} so QA container can run it (do not delete here)
       '''
     }
     failure {
