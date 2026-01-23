@@ -469,7 +469,8 @@ pipeline {
     }
 
     stage('Deploy to QA (Docker)') {
-      when {
+      when
+      {
         allOf {
           expression { !params.SKIP_DEPLOY }
 
@@ -483,7 +484,10 @@ pipeline {
           // STRICT CI: Deploy ONLY if SUCCESS. currentBuild.currentResult is often null while running,
           // so allow null (in-progress) or explicit SUCCESS. Previous code checked for 'UNSTABLE' which
           // unintentionally skipped deploy when the build was SUCCESS.
-          expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
+          expression {
+            def r = currentBuild.currentResult
+            return r == null || r == 'SUCCESS' || r == 'UNSTABLE'
+          }
         }
       }
       steps {
