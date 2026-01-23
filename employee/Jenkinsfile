@@ -263,9 +263,9 @@ pipeline {
         always {
             dir ('employee') {
                 sh 'ls -l'
-                sh 'ls -l'
                 unstash 'allure-results-unit'
                 unstash 'allure-results-integration'
+                sh 'ls -l'
 
                 echo '📊 Generating Allure Report...'
                 allure([
@@ -281,14 +281,6 @@ pipeline {
                 '''
                 
                 echo '📦 Archiving test results and reports...'
-                sh '''
-                    echo "=== Checking for test-results ==="
-                    find test-results -type f 2>/dev/null || echo "No test-results found"
-                    echo "=== Checking for allure-results ==="
-                    find allure-results -type f 2>/dev/null || echo "No allure-results found"
-                    echo "=== Checking for htmlcov ==="
-                    find htmlcov -type f 2>/dev/null || echo "No htmlcov found"
-                '''
 
                 archiveArtifacts artifacts: '''
                     test-results/**/*.xml,
