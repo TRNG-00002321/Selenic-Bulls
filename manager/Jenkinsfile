@@ -477,7 +477,7 @@ pipeline {
           // Deploy only from main/master.
           expression {
             def gb = (env.GIT_BRANCH ?: "")
-            return gb == "origin/main" || gb == "origin/master"
+            return gb == "origin/nikhil-21" || gb == "origin/master"
           }
 
           // ✅ STRICT CI: Deploy ONLY if SUCCESS.
