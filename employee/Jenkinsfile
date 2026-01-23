@@ -60,7 +60,6 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results -v ${WORKSPACE}/employee/test-results:/employee/test-results'
                 }
             }
             steps {
@@ -89,7 +88,6 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results -v ${WORKSPACE}/employee/test-results:/employee/test-results'
                 }
             }
             steps {
