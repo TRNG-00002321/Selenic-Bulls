@@ -1,6 +1,9 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
 // QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
-// + Deploy to QA (Docker)
+// + Deploy to QA (Docker)  ✅ (now actually deploys)
+//
+// NOTE (temporary): Deploy runs on SUCCESS or UNSTABLE so you can deploy even while E2E is failing.
+// When E2E is fixed and you want deploy-only-on-success, change the Deploy "when" condition as noted below.
 
 pipeline {
   agent any
@@ -278,7 +281,6 @@ pipeline {
       }
       post {
         always {
-          // If tests fail, this typically marks build UNSTABLE (which will block Deploy stage below).
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
@@ -462,7 +464,6 @@ pipeline {
           archiveArtifacts artifacts: 'allure-html/**', allowEmptyArchive: true
 
           // Also publish ONE Allure report in Jenkins UI (combined)
-          // (Jenkins Allure plugin typically publishes a single "Allure Report" action.)
           allure([
             includeProperties: false,
             results: [
@@ -474,32 +475,36 @@ pipeline {
         }
       }
     }
+
+    // -----------------------------
+    // Deploy to QA (Docker) ✅ NOW IMPLEMENTED
+    // -----------------------------
     stage('Deploy to QA (Docker)') {
       when {
         allOf {
           expression { !params.SKIP_DEPLOY }
           branch 'main'
-          // Deploy even if UNSTABLE for now (because E2E is failing)
+          // TEMP: allow deploy even if UNSTABLE while E2E is failing
+          // Change to == 'SUCCESS' when you want strict deploy-only-on-success.
           expression { currentBuild.currentResult == null || currentBuild.currentResult in ['SUCCESS','UNSTABLE'] }
         }
       }
       steps {
-        echo "🚀 Deploying ${APP_NAME}:${BUILD_VERSION} to QA..."
-
+        echo "🚀 Deploying ${APP_NAME}:${BUILD_VERSION} to QA (container: ${QA_CONTAINER})..."
         sh '''
           set -e
 
           echo "---- Deploy Gate Debug ----"
           echo "BRANCH_NAME=${BRANCH_NAME}"
-          echo "BUILD_RESULT=${currentBuild_currentResult:-unknown}"
+          echo "SKIP_DEPLOY=${SKIP_DEPLOY}"
 
-          # Ensure QA volume exists (persist data across deployments)
+          # Create QA volume (persist data across deployments)
           docker volume create "${QA_DB_VOLUME}" >/dev/null
 
-          # Ensure network exists (optional but consistent)
+          # Ensure network exists (optional)
           docker network create "${TEST_NETWORK}" >/dev/null 2>&1 || true
 
-          # Stop & remove any existing QA container
+          # Stop/remove existing QA container
           docker stop "${QA_CONTAINER}" >/dev/null 2>&1 || true
           docker rm   "${QA_CONTAINER}" >/dev/null 2>&1 || true
 
@@ -518,7 +523,6 @@ pipeline {
           for i in $(seq 1 45); do
             if docker exec "${QA_CONTAINER}" sh -lc "wget -q --spider http://localhost:${APP_PORT}/health"; then
               echo "✅ QA deployment healthy!"
-              echo "QA URL: http://<jenkins-host>:${QA_PORT}"
               exit 0
             fi
             echo "⏳ Not ready yet (${i}/45)..."
@@ -543,9 +547,8 @@ pipeline {
 
         docker rm -f "${SELENIUM_CONTAINER}" >/dev/null 2>&1 || true
 
-        # Optionally keep built images for debugging; uncomment to delete
+        # Keep ${APP_NAME}:${BUILD_VERSION} so QA container can run it (do not delete here)
         docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} >/dev/null 2>&1 || true
-        # docker rmi ${APP_NAME}:${BUILD_VERSION} >/dev/null 2>&1 || true
       '''
     }
     failure {
