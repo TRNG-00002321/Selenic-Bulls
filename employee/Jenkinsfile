@@ -65,15 +65,18 @@ pipeline {
             }
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
-                sh '''
-                    cd employee
-                    mkdir -p /employee/test-results
-                    
-                    pip install --quiet -r requirements.txt
-                    python -m pytest tests/unit_tests -v \
-                        --alluredir=/employee/allure-results \
-                        --junitxml=/employee/test-results/unit-results.xml
-                '''
+                dir ('employee') {
+                    sh '''
+                        mkdir -p test-results allure-results
+                        
+                        pip install --quiet -r requirements.txt
+                        python -m pytest tests/unit_tests -v \
+                            --alluredir=allure-results/unit/ \
+                            --junitxml=test-results/unit-results.xml
+                    '''
+                    stash includes: 'allure-results/**', name: 'allure-results-unit'
+                    stash includes: 'test-results/**', name: 'test-results-unit'
+                }
             }
             post {
                 always {
@@ -90,24 +93,27 @@ pipeline {
                 }
             }
             steps {
-                echo '🔌 Running Python API Tests...'
-                sh '''
-                    cd employee
-                    mkdir -p /employee/test-results
+                dir ('employee') {
+                    echo '🔌 Running Python API Tests...'
+                    sh '''
+                        mkdir -p test-results allure-results
 
-                    pip install --quiet -r requirements.txt
-                    python main.py &  # Start the app in the background
-                    APP_PID=$!
-                    sleep 10 # Wait for app to be ready
-                    
-                    # Run tests and ensure app is killed afterwards
-                    python -m pytest tests/integration_tests -v \
-                        --alluredir=/employee/allure-results \
-                        --junitxml=/employee/test-results/integration-results.xml
-                    
-                    # Kill the background app process
-                    kill $APP_PID || true
-                '''
+                        pip install --quiet -r requirements.txt
+                        python main.py &  # Start the app in the background
+                        APP_PID=$!
+                        sleep 10 # Wait for app to be ready
+
+                        # Run tests and ensure app is killed afterwards
+                        python -m pytest tests/integration_tests -v \
+                            --alluredir=allure-results/integration/ \
+                            --junitxml=test-results/integration-results.xml
+                            
+                        # Kill the background app process
+                        kill $APP_PID || true
+                    '''
+                    stash includes: 'allure-results/**', name: 'allure-results-integration'
+                    stash includes: 'test-results/**', name: 'test-results-integration'
+                }
             }
             post {
                 always {
@@ -231,14 +237,16 @@ pipeline {
             }
             post {
                 always {
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'employee/htmlcov',
-                        reportFiles: 'index.html',
-                        reportName: 'Python Coverage Report'
-                    ])
+                    dir ('employee') {
+                        publishHTML(target: [
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'htmlcov',
+                            reportFiles: 'index.html',
+                            reportName: 'Python Coverage Report'
+                        ])
+                    }
                 }
             }
         }
@@ -261,24 +269,38 @@ pipeline {
     
     post {
         always {
-            echo '📊 Generating Allure Report...'
-            allure([
-                        includeProperties: false,
-                        results: [[path: 'employee/allure-results']]
-                    ])
-            
-            echo '🧹 Cleaning up...'
-            sh '''
-                docker stop ${APP_NAME}-test || true
-                docker rm ${APP_NAME}-test || true
-                docker rmi ${APP_NAME}:${BUILD_VERSION} || true
-            '''
-            
-            archiveArtifacts artifacts: '''
-                employee/test-results/**/*.xml,
-                employee/allure-results/**/*,
-                employee/htmlcov/**/*
-            ''', allowEmptyArchive: true
+            dir ('employee') {
+                sh 'ls -l'
+                unstash 'allure-results-unit'
+                unstash 'allure-results-integration'
+
+                unstash 'test-results-unit'
+                unstash 'test-results-integration'
+                sh 'ls -l'
+
+                echo '📊 Generating Allure Report...'
+                allure([
+                            includeProperties: false,
+                            results: [
+                                [path: 'allure-results/unit'],
+                                [path: 'allure-results/integration']]
+                        ])
+
+                echo '🧹 Cleaning up...'
+                sh '''
+                    docker stop ${APP_NAME}-test || true
+                    docker rm ${APP_NAME}-test || true
+                    docker rmi ${APP_NAME}:${BUILD_VERSION} || true
+                '''
+                
+                echo '📦 Archiving test results and reports...'
+
+                archiveArtifacts artifacts: '''
+                    test-results/**/*.xml,
+                    allure-results/**/*,
+                    htmlcov/**/*
+                ''', allowEmptyArchive: true
+            }
         }
         
         success {
