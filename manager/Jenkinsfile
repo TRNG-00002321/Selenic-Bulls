@@ -123,6 +123,7 @@ pipeline {
           fi
           echo "---- Allure UNIT files ----"
           ls -la "${ALLURE_UNIT}" || true
+          echo "UNIT json count:"; find "${ALLURE_UNIT}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
@@ -234,24 +235,32 @@ pipeline {
             export DATABASE_PATH=/data/expense_manager.db
             export DB_PATH=/data/expense_manager.db
 
-            # ✅ Force Allure results dir for API stage
-            export ALLURE_RESULTS_DIRECTORY=target/allure-results/api
+            # ✅ Force Allure results dir for API stage (ABSOLUTE)
+            export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
 
             mvn -B clean test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
               -DbaseUrl=http://localhost:'"${APP_PORT}"' \
-              -Dallure.results.directory=target/allure-results/api \
+              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/api" \
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy API allure results OUT of container into Jenkins workspace (FLATTEN via "/.")
+          echo "---- API Allure (inside container) ----"
+          docker exec ${APP_NAME}-test sh -lc '
+            ls -la '"${CONTAINER_WS}"'/manager/target/allure-results/api || true
+            echo "API json count:"; find '"${CONTAINER_WS}"'/manager/target/allure-results/api -type f -name "*.json" | wc -l || true
+            echo "Any allure-results dirs under target:"; find '"${CONTAINER_WS}"'/manager/target -maxdepth 5 -type d -name "allure-results" -print || true
+          '
+
+          # ✅ Copy API allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_API}" || true
           mkdir -p "${ALLURE_API}"
           docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/api/. "${ALLURE_API}" || true
 
-          echo "---- Allure API files ----"
+          echo "---- Allure API files (host) ----"
           ls -la "${ALLURE_API}" || true
+          echo "API json count (host):"; find "${ALLURE_API}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
@@ -320,25 +329,37 @@ pipeline {
             # IMPORTANT: browser runs in selenium container, so baseUrl must be the APP CONTAINER NAME
             export BASE_URL="http://'${APP_NAME}'-test:'"${APP_PORT}"'"
 
-            # ✅ Force Allure results dir for E2E stage
-            export ALLURE_RESULTS_DIRECTORY=target/allure-results/e2e
+            # ✅ Force Allure results dir for E2E stage (ABSOLUTE)
+            export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
 
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
               -DbaseUrl="${BASE_URL}" \
               -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
               -Dbrowser=chrome \
-              -Dallure.results.directory=target/allure-results/e2e \
+              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e" \
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy E2E allure results OUT of container into Jenkins workspace (FLATTEN via "/.")
+          echo "---- E2E Allure (inside container) ----"
+          docker exec ${APP_NAME}-test sh -lc '
+            ls -la '"${CONTAINER_WS}"'/manager/target/allure-results/e2e || true
+            echo "E2E json count:"; find '"${CONTAINER_WS}"'/manager/target/allure-results/e2e -type f -name "*.json" | wc -l || true
+
+            echo "---- Any allure-results anywhere under target? ----"
+            find '"${CONTAINER_WS}"'/manager/target -maxdepth 5 -type d -name "allure-results" -print || true
+            echo "Sample json files:"
+            find '"${CONTAINER_WS}"'/manager/target -maxdepth 7 -type f -name "*.json" | head -n 20 || true
+          '
+
+          # ✅ Copy E2E allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_E2E}" || true
           mkdir -p "${ALLURE_E2E}"
           docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/e2e/. "${ALLURE_E2E}" || true
 
-          echo "---- Allure E2E files ----"
+          echo "---- Allure E2E files (host) ----"
           ls -la "${ALLURE_E2E}" || true
+          echo "E2E json count (host):"; find "${ALLURE_E2E}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
@@ -372,6 +393,17 @@ pipeline {
       when { expression { !params.SKIP_ALLURE } }
       steps {
         echo '📊 Publishing Allure Report (Unit + API + E2E)...'
+        sh '''
+          echo "---- Pre-Publish Allure Sanity Check (host) ----"
+          echo "UNIT:"; ls -la manager/target/allure-results/unit || true
+          echo "API:";  ls -la manager/target/allure-results/api  || true
+          echo "E2E:";  ls -la manager/target/allure-results/e2e  || true
+
+          echo "json counts:"
+          echo -n "UNIT: "; find manager/target/allure-results/unit -type f -name "*.json" | wc -l || true
+          echo -n "API:  "; find manager/target/allure-results/api  -type f -name "*.json" | wc -l || true
+          echo -n "E2E:  "; find manager/target/allure-results/e2e  -type f -name "*.json" | wc -l || true
+        '''
       }
       post {
         always {
