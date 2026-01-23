@@ -265,6 +265,9 @@ pipeline {
                 sh 'ls -l'
                 unstash 'allure-results-unit'
                 unstash 'allure-results-integration'
+
+                unstash 'test-results-unit'
+                unstash 'test-results-integration'
                 sh 'ls -l'
 
                 echo '📊 Generating Allure Report...'
