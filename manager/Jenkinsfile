@@ -1,6 +1,7 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
 // QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
-// + Deploy to QA (Docker)  ✅ (deploy stage fixed to not get skipped due to branch name issues)
+// + Deploy to QA (Docker)
+// STRICT CI: test failures FAIL the pipeline; deploy runs only on SUCCESS.
 
 pipeline {
   agent any
@@ -255,12 +256,12 @@ pipeline {
 
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
 
+            # STRICT CI: DO NOT IGNORE TEST FAILURES
             mvn -B clean test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
               -DbaseUrl=http://localhost:'"${APP_PORT}"' \
-              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/api" \
-              -Dmaven.test.failure.ignore=true
+              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
           '
 
           rm -rf "${ALLURE_API}" || true
@@ -337,13 +338,13 @@ pipeline {
 
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
 
+            # STRICT CI: DO NOT IGNORE TEST FAILURES
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
               -DbaseUrl="${BASE_URL}" \
               -Dselenium.remoteUrl="'${SELENIUM_REMOTE_URL}'" \
               -Dbrowser=chrome \
-              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e" \
-              -Dmaven.test.failure.ignore=true
+              -Dallure.results.directory="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
           '
 
           rm -rf "${ALLURE_E2E}" || true
@@ -454,7 +455,6 @@ pipeline {
       }
     }
 
-    // ✅ NEW: shows why Deploy would skip (prints BRANCH_NAME, etc.)
     stage('Debug Deploy Gate') {
       steps {
         script {
@@ -468,14 +468,19 @@ pipeline {
       }
     }
 
-    // ✅ FIXED: Deploy no longer depends on `branch 'main'` directive (which can fail in non-multibranch jobs)
     stage('Deploy to QA (Docker)') {
       when {
         allOf {
           expression { !params.SKIP_DEPLOY }
-          // ✅ Works for multibranch pipelines; also supports repos still using "master"
-          expression { (env.BRANCH_NAME ?: '') in ['main', 'master'] }
-          // ✅ Deploy only if SUCCESS (or not yet set)
+
+          // ✅ Your job is NOT multibranch (BRANCH_NAME is null), so use GIT_BRANCH.
+          // Deploy only from main/master.
+          expression {
+            def gb = (env.GIT_BRANCH ?: "")
+            return gb == "origin/main" || gb == "origin/master"
+          }
+
+          // ✅ STRICT CI: Deploy ONLY if SUCCESS.
           expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
         }
       }
@@ -527,7 +532,7 @@ pipeline {
 
         docker rm -f "${SELENIUM_CONTAINER}" >/dev/null 2>&1 || true
 
-        # Keep ${APP_NAME}:${BUILD_VERSION} so QA container can run it (do not delete here)
+        # Keep ${APP_NAME}:${BUILD_VERSION} so QA container can run it
         docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} >/dev/null 2>&1 || true
       '''
     }
