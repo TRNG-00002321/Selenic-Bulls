@@ -261,7 +261,6 @@ pipeline {
     
     post {
         always {
-            unstash 'test-results-unit'
             dir ('employee') {
                 echo '📊 Generating Allure Report...'
                 allure([
@@ -291,7 +290,7 @@ pipeline {
                     allure-results/**/*,
                     htmlcov/**/*
                 ''', allowEmptyArchive: true
-                }
+            }
         }
         
         success {
