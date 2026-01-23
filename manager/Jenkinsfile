@@ -1,3 +1,7 @@
+// Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
+// QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
+// + Deploy to QA (Docker)
+
 pipeline {
   agent any
 
@@ -25,12 +29,28 @@ pipeline {
     ALLURE_UNIT = "manager/target/allure-results/unit"
     ALLURE_API  = "manager/target/allure-results/api"
     ALLURE_E2E  = "manager/target/allure-results/e2e"
+
+    // ✅ Generated HTML reports (per-type + combined)
+    ALLURE_HTML_ROOT   = "allure-html"
+    ALLURE_HTML_UNIT   = "allure-html/unit"
+    ALLURE_HTML_API    = "allure-html/api"
+    ALLURE_HTML_E2E    = "allure-html/e2e"
+    ALLURE_HTML_ALL    = "allure-html/combined"
+
+    // ✅ Allure CLI (downloaded locally if not present)
+    ALLURE_VERSION = "2.27.0"
+    ALLURE_HOME    = ".allure/allure-${ALLURE_VERSION}"
+
+    // ✅ QA deploy container
+    QA_CONTAINER   = "${APP_NAME}-qa"
+    QA_PORT        = "5001"              // change if you want QA on different port
+    QA_DB_VOLUME   = "expense-data-qa"   // separate from test DB
   }
 
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
     timestamps()
-    timeout(time: 45, unit: 'MINUTES')
+    timeout(time: 60, unit: 'MINUTES')
   }
 
   parameters {
@@ -55,6 +75,7 @@ pipeline {
         }
 
         sh '''
+          set -e
           echo "---- Workspace ----"
           pwd
           ls -la
@@ -123,7 +144,7 @@ pipeline {
           fi
           echo "---- Allure UNIT files ----"
           ls -la "${ALLURE_UNIT}" || true
-          echo "UNIT json count:"; find "${ALLURE_UNIT}" -type f -name "*.json" | wc -l || true
+          echo -n "UNIT json count: "; find "${ALLURE_UNIT}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
@@ -218,7 +239,6 @@ pipeline {
           set -e
 
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
-          docker exec ${APP_NAME}-test sh -lc "ls -la /data || true"
           docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db && echo '✅ DB present in /data' || (echo '❌ DB missing in /data' && exit 1)"
 
           # ✅ Clean allure results INSIDE the container for this stage (api)
@@ -246,13 +266,6 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          echo "---- API Allure (inside container) ----"
-          docker exec ${APP_NAME}-test sh -lc '
-            ls -la '"${CONTAINER_WS}"'/manager/target/allure-results/api || true
-            echo "API json count:"; find '"${CONTAINER_WS}"'/manager/target/allure-results/api -type f -name "*.json" | wc -l || true
-            echo "Any allure-results dirs under target:"; find '"${CONTAINER_WS}"'/manager/target -maxdepth 5 -type d -name "allure-results" -print || true
-          '
-
           # ✅ Copy API allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_API}" || true
           mkdir -p "${ALLURE_API}"
@@ -260,11 +273,12 @@ pipeline {
 
           echo "---- Allure API files (host) ----"
           ls -la "${ALLURE_API}" || true
-          echo "API json count (host):"; find "${ALLURE_API}" -type f -name "*.json" | wc -l || true
+          echo -n "API json count (host): "; find "${ALLURE_API}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
         always {
+          // If tests fail, this typically marks build UNSTABLE (which will block Deploy stage below).
           junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         }
       }
@@ -341,17 +355,6 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          echo "---- E2E Allure (inside container) ----"
-          docker exec ${APP_NAME}-test sh -lc '
-            ls -la '"${CONTAINER_WS}"'/manager/target/allure-results/e2e || true
-            echo "E2E json count:"; find '"${CONTAINER_WS}"'/manager/target/allure-results/e2e -type f -name "*.json" | wc -l || true
-
-            echo "---- Any allure-results anywhere under target? ----"
-            find '"${CONTAINER_WS}"'/manager/target -maxdepth 5 -type d -name "allure-results" -print || true
-            echo "Sample json files:"
-            find '"${CONTAINER_WS}"'/manager/target -maxdepth 7 -type f -name "*.json" | head -n 20 || true
-          '
-
           # ✅ Copy E2E allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_E2E}" || true
           mkdir -p "${ALLURE_E2E}"
@@ -359,7 +362,7 @@ pipeline {
 
           echo "---- Allure E2E files (host) ----"
           ls -la "${ALLURE_E2E}" || true
-          echo "E2E json count (host):"; find "${ALLURE_E2E}" -type f -name "*.json" | wc -l || true
+          echo -n "E2E json count (host): "; find "${ALLURE_E2E}" -type f -name "*.json" | wc -l || true
         '''
       }
       post {
@@ -389,25 +392,77 @@ pipeline {
       }
     }
 
-    stage('Generate Allure Report') {
+    // -----------------------------
+    // Allure Reports (Per Type + Combined)
+    // -----------------------------
+    stage('Generate Allure HTML Reports (Unit/API/E2E/Combined)') {
       when { expression { !params.SKIP_ALLURE } }
       steps {
-        echo '📊 Publishing Allure Report (Unit + API + E2E)...'
+        echo '📊 Generating Allure HTML reports (per type + combined)...'
         sh '''
-          echo "---- Pre-Publish Allure Sanity Check (host) ----"
-          echo "UNIT:"; ls -la manager/target/allure-results/unit || true
-          echo "API:";  ls -la manager/target/allure-results/api  || true
-          echo "E2E:";  ls -la manager/target/allure-results/e2e  || true
+          set -e
 
-          echo "json counts:"
-          echo -n "UNIT: "; find manager/target/allure-results/unit -type f -name "*.json" | wc -l || true
-          echo -n "API:  "; find manager/target/allure-results/api  -type f -name "*.json" | wc -l || true
-          echo -n "E2E:  "; find manager/target/allure-results/e2e  -type f -name "*.json" | wc -l || true
+          # Sanity check results exist
+          echo "---- Results sanity check ----"
+          echo -n "UNIT json: "; find "${ALLURE_UNIT}" -type f -name "*.json" 2>/dev/null | wc -l || true
+          echo -n "API  json: "; find "${ALLURE_API}"  -type f -name "*.json" 2>/dev/null | wc -l || true
+          echo -n "E2E  json: "; find "${ALLURE_E2E}"  -type f -name "*.json" 2>/dev/null | wc -l || true
+
+          # Download Allure CLI locally if missing
+          if [ ! -x "${ALLURE_HOME}/bin/allure" ]; then
+            echo "Downloading Allure CLI ${ALLURE_VERSION}..."
+            mkdir -p .allure
+            rm -rf "${ALLURE_HOME}" || true
+            curl -fsSL -o .allure/allure.zip "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip"
+            unzip -q .allure/allure.zip -d .allure
+            chmod +x "${ALLURE_HOME}/bin/allure" || true
+          fi
+
+          rm -rf "${ALLURE_HTML_ROOT}" || true
+          mkdir -p "${ALLURE_HTML_UNIT}" "${ALLURE_HTML_API}" "${ALLURE_HTML_E2E}" "${ALLURE_HTML_ALL}"
+
+          # Generate per-type HTML reports (only if that folder has json)
+          if find "${ALLURE_UNIT}" -type f -name "*.json" | grep -q .; then
+            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_UNIT}" -o "${ALLURE_HTML_UNIT}" --clean
+          else
+            echo "No UNIT allure json found; skipping UNIT HTML."
+          fi
+
+          if find "${ALLURE_API}" -type f -name "*.json" | grep -q .; then
+            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_API}" -o "${ALLURE_HTML_API}" --clean
+          else
+            echo "No API allure json found; skipping API HTML."
+          fi
+
+          if find "${ALLURE_E2E}" -type f -name "*.json" | grep -q .; then
+            "${ALLURE_HOME}/bin/allure" generate "${ALLURE_E2E}" -o "${ALLURE_HTML_E2E}" --clean
+          else
+            echo "No E2E allure json found; skipping E2E HTML."
+          fi
+
+          # Combined report (include all results folders that exist)
+          COMBINED_INPUTS=""
+          [ -d "${ALLURE_UNIT}" ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_UNIT}"
+          [ -d "${ALLURE_API}"  ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_API}"
+          [ -d "${ALLURE_E2E}"  ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_E2E}"
+
+          if echo "${COMBINED_INPUTS}" | grep -q "[^ ]"; then
+            "${ALLURE_HOME}/bin/allure" generate ${COMBINED_INPUTS} -o "${ALLURE_HTML_ALL}" --clean
+          else
+            echo "No inputs for combined report."
+          fi
+
+          echo "---- Generated HTML folders ----"
+          ls -la "${ALLURE_HTML_ROOT}" || true
         '''
       }
       post {
         always {
-          // ✅ Generate a single report from the 3 result roots
+          // Archive HTML reports so you have separate Unit/API/E2E HTML outputs per build
+          archiveArtifacts artifacts: 'allure-html/**', allowEmptyArchive: true
+
+          // Also publish ONE Allure report in Jenkins UI (combined)
+          // (Jenkins Allure plugin typically publishes a single "Allure Report" action.)
           allure([
             includeProperties: false,
             results: [
@@ -420,31 +475,74 @@ pipeline {
       }
     }
 
+    // -----------------------------
+    // Deploy to QA (Docker)
+    // -----------------------------
     stage('Deploy to QA') {
       when {
         allOf {
           expression { !params.SKIP_DEPLOY }
           branch 'main'
-          expression { currentBuild.currentResult == 'SUCCESS' }
+          // Allow deploy only if build has not been marked bad, or is SUCCESS.
+          // If tests fail, junit usually marks UNSTABLE -> deploy will skip.
+          expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
         }
       }
       steps {
-        echo '🚀 All tests passed! Deploying Manager App to QA...'
+        echo "🚀 Deploying ${APP_NAME}:${BUILD_VERSION} to QA (container: ${QA_CONTAINER})..."
+        sh '''
+          set -e
+
+          # Create QA volume if needed (do NOT wipe QA DB on each deploy)
+          docker volume create "${QA_DB_VOLUME}" >/dev/null
+
+          # Stop/remove existing QA container
+          docker stop "${QA_CONTAINER}" >/dev/null 2>&1 || true
+          docker rm   "${QA_CONTAINER}" >/dev/null 2>&1 || true
+
+          # Ensure network exists (optional)
+          docker network create "${TEST_NETWORK}" >/dev/null 2>&1 || true
+
+          # Run QA container
+          docker run -d \
+            --name "${QA_CONTAINER}" \
+            --restart unless-stopped \
+            --network "${TEST_NETWORK}" \
+            -p "${QA_PORT}:${APP_PORT}" \
+            -v "${QA_DB_VOLUME}:/data" \
+            ${APP_NAME}:${BUILD_VERSION}
+
+          # Wait for QA health
+          echo "Waiting for QA health..."
+          for i in $(seq 1 40); do
+            if docker exec "${QA_CONTAINER}" sh -lc "wget -q --spider http://localhost:${APP_PORT}/health"; then
+              echo "✅ QA deployment healthy!"
+              exit 0
+            fi
+            echo "⏳ Not ready yet (${i}/40)..."
+            sleep 2
+          done
+
+          echo "❌ QA did not become healthy"
+          docker logs "${QA_CONTAINER}" || true
+          exit 1
+        '''
       }
     }
   }
 
   post {
     always {
-      echo '🧹 Cleaning up...'
+      echo '🧹 Cleaning up test infra...'
       sh '''
-        docker stop ${APP_NAME}-test || true
-        docker rm ${APP_NAME}-test || true
+        docker stop ${APP_NAME}-test >/dev/null 2>&1 || true
+        docker rm   ${APP_NAME}-test >/dev/null 2>&1 || true
 
         docker rm -f "${SELENIUM_CONTAINER}" >/dev/null 2>&1 || true
 
-        docker rmi ${APP_NAME}:${BUILD_VERSION} || true
-        docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} || true
+        # Optionally keep built images for debugging; uncomment to delete
+        docker rmi ${APP_NAME}-testrunner:${BUILD_VERSION} >/dev/null 2>&1 || true
+        # docker rmi ${APP_NAME}:${BUILD_VERSION} >/dev/null 2>&1 || true
       '''
     }
     failure {
