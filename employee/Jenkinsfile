@@ -60,19 +60,19 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results -v ${WORKSPACE}/employee/test-results:/employee/test-results'
                 }
             }
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
                 sh '''
                     cd employee
-                    mkdir -p test-results allure-results
+                    mkdir -p /employee/test-results
                     
                     pip install --quiet -r requirements.txt
                     python -m pytest tests/unit_tests -v \
                         --alluredir=/employee/allure-results \
-                        --junitxml=test-results/unit-results.xml
+                        --junitxml=/employee/test-results/unit-results.xml
                 '''
             }
             post {
@@ -86,14 +86,14 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.12-slim'
-                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results'
+                    args '-v ${WORKSPACE}/employee/allure-results:/employee/allure-results -v ${WORKSPACE}/employee/test-results:/employee/test-results'
                 }
             }
             steps {
                 echo '🔌 Running Python API Tests...'
                 sh '''
                     cd employee
-                    mkdir -p test-results
+                    mkdir -p /employee/test-results
 
                     pip install --quiet -r requirements.txt
                     python main.py &  # Start the app in the background
@@ -103,7 +103,7 @@ pipeline {
                     # Run tests and ensure app is killed afterwards
                     python -m pytest tests/integration_tests -v \
                         --alluredir=/employee/allure-results \
-                        --junitxml=test-results/integration-results.xml
+                        --junitxml=/employee/test-results/integration-results.xml
                     
                     # Kill the background app process
                     kill $APP_PID || true
@@ -116,14 +116,14 @@ pipeline {
             }
         }
         
-        /*stage('E2E Tests') {
+        stage('E2E Tests') {
             parallel {
                 stage('Chrome E2E Tests') {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                     when {
@@ -153,7 +153,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -183,7 +183,7 @@ pipeline {
                         dockerfile {
                             filename 'Dockerfile.browsers'
                             dir 'employee'
-                            args '-t python-browsers -v /var/run/docker.sock:/var/run/docker.sock'
+                            args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
                      when {
@@ -209,7 +209,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
         
         stage('Code Coverage') {
             agent {
