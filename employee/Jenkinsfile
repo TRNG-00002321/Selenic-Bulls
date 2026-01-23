@@ -120,7 +120,7 @@ pipeline {
             }
         }
         
-        /*stage('E2E Tests') {
+        stage('E2E Tests') {
             parallel {
                 stage('Chrome E2E Tests') {
                     agent {
@@ -138,18 +138,21 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Chrome (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=chrome ./tests/system_tests/selenium/features || true
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=chrome ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-chrome && mv allure-results/* allure-results/e2e-chrome/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-chrome' 
+                        }
                     }
                 }
                 stage('Firefox E2E Tests') {
@@ -168,18 +171,21 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Firefox (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=firefox ./tests/system_tests/selenium/features || true
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=firefox ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-firefox && mv allure-results/* allure-results/e2e-firefox/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-firefox' 
+                        }
                     }
                 }
                 stage('Edge E2E Tests') {
@@ -198,22 +204,25 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Edge (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=edge ./tests/system_tests/selenium/features || true
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=edge ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-edge && mv allure-results/* allure-results/e2e-edge/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-edge' 
+                        }
                     }
                 }
             }
-        }*/
+        }
         
         stage('Code Coverage') {
             agent {
@@ -271,6 +280,10 @@ pipeline {
                 sh 'ls -l'
                 unstash 'allure-results-unit'
                 unstash 'allure-results-integration'
+                unstash 'allure-results-e2e-chrome'
+                unstash 'allure-results-e2e-firefox'
+                unstash 'allure-results-e2e-edge'
+
 
                 unstash 'test-results-unit'
                 unstash 'test-results-integration'
@@ -281,7 +294,10 @@ pipeline {
                             includeProperties: false,
                             results: [
                                 [path: 'allure-results/unit'],
-                                [path: 'allure-results/integration']]
+                                [path: 'allure-results/integration'],
+                                [path: 'allure-results/e2e-chrome'],
+                                [path: 'allure-results/e2e-firefox'],
+                                [path: 'allure-results/e2e-edge']]
                         ])
 
                 echo '🧹 Cleaning up...'
