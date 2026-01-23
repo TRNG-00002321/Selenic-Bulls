@@ -261,11 +261,12 @@ pipeline {
     
     post {
         always {
-            sh 'ls -la'
-            unstash 'allure-results-unit'
-            unstash 'allure-results-integration'
-            sh 'ls -la'
             dir ('employee') {
+                sh 'ls -l'
+                sh 'ls -l'
+                unstash 'allure-results-unit'
+                unstash 'allure-results-integration'
+
                 echo '📊 Generating Allure Report...'
                 allure([
                             includeProperties: false,
