@@ -64,19 +64,22 @@ pipeline {
             }
             steps {
                 echo '🧪 Running Python Unit Tests with Allure...'
-                sh '''
-                    cd employee
-                    mkdir -p allure-results test-results
-                    
-                    pip install --quiet -r requirements.txt
-                    python -m pytest tests/unit_tests -v \
-                        --alluredir=allure-results \
-                        --junitxml=test-results/unit-results.xml
-                '''
+                dir ('employee') {
+                    sh '''
+                        mkdir -p test-results allure-results
+                        
+                        pip install --quiet -r requirements.txt
+                        python -m pytest tests/unit_tests -v \
+                            --alluredir=allure-results/unit/ \
+                            --junitxml=test-results/unit-results.xml
+                    '''
+                    stash includes: 'allure-results/**', name: 'allure-results-unit'
+                    stash includes: 'test-results/**', name: 'test-results-unit'
+                }
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'test-results/*.xml'
+                    junit allowEmptyResults: true, testResults: 'employee/test-results/*.xml'
                 }
             }
         }
@@ -88,22 +91,31 @@ pipeline {
                 }
             }
             steps {
-                echo '🔌 Running Python API Tests...'
-                sh '''
-                    cd employee
-                    mkdir -p allure-results test-results
+                dir ('employee') {
+                    echo '🔌 Running Python API Tests...'
+                    sh '''
+                        mkdir -p test-results allure-results
 
-                    pip install --quiet -r requirements.txt
-                    python main.py &  # Start the app in the background
-                    sleep 10 # Wait for app to be ready
-                    python -m pytest tests/integration_tests -v \
-                        --alluredir=/app/allure-results \
-                        --junitxml=/app/test-results/integration-results.xml
-                '''
+                        pip install --quiet -r requirements.txt
+                        python main.py &  # Start the app in the background
+                        APP_PID=$!
+                        sleep 10 # Wait for app to be ready
+
+                        # Run tests and ensure app is killed afterwards
+                        python -m pytest tests/integration_tests -v \
+                            --alluredir=allure-results/integration/ \
+                            --junitxml=test-results/integration-results.xml
+                            
+                        # Kill the background app process
+                        kill $APP_PID || true
+                    '''
+                    stash includes: 'allure-results/**', name: 'allure-results-integration'
+                    stash includes: 'test-results/**', name: 'test-results-integration'
+                }
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'test-results/integration-results.xml'
+                    junit allowEmptyResults: true, testResults: 'employee/test-results/*.xml'
                 }
             }
         }
@@ -113,7 +125,8 @@ pipeline {
                 stage('Chrome E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.chrome'
+                            filename 'Dockerfile.browsers'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -125,25 +138,28 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Chrome (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet --no-cache-dir behave selenium allure-behave webdriver-manager
-                            pip install --quiet --no-cache-dir -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=chrome ./tests/system_tests/selenium/features
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=chrome ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-chrome && mv allure-results/* allure-results/e2e-chrome/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-chrome' 
+                        }
                     }
                 }
                 stage('Firefox E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.firefox'
+                            filename 'Dockerfile.browsers'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -155,25 +171,28 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Firefox (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet behave selenium allure-behave webdriver-manager
-                            pip install --quiet -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=firefox ./tests/system_tests/selenium/features
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=firefox ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-firefox && mv allure-results/* allure-results/e2e-firefox/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-firefox' 
+                        }
                     }
                 }
                 stage('Edge E2E Tests') {
                     agent {
                         dockerfile {
-                            filename 'employee/Dockerfile.edge'
+                            filename 'Dockerfile.browsers'
+                            dir 'employee'
                             args '-v /var/run/docker.sock:/var/run/docker.sock'
                         }
                     }
@@ -185,19 +204,21 @@ pipeline {
                     }
                     steps {
                         echo '🌐 Running Python E2E Tests in Edge (Behave + Selenium)...'
-                        sh '''
-                            cd employee
-                            mkdir -p allure-results test-results
-        
-                            # Start the application in the background then wait for the app to be ready
-                            pip install --quiet behave selenium allure-behave webdriver-manager
-                            pip install --quiet -r requirements.txt
-                            python main.py &
-                            sleep 10 
-                            
-                            # Run Behave tests
-                            behave -D browser=edge ./tests/system_tests/selenium/features
-                        '''
+                        dir ('employee') {
+                            sh '''
+                                mkdir -p allure-results test-results
+            
+                                # Start the application in the background then wait for the app to be ready
+                                pip install --quiet -r requirements.txt
+                                python main.py &
+                                sleep 10 
+                                
+                                # Run Behave tests
+                                behave -D browser=edge ./tests/system_tests/selenium/features || true
+                            '''
+                            sh 'mkdir -p allure-results/e2e-edge && mv allure-results/* allure-results/e2e-edge/ || true'
+                            stash includes: 'allure-results/**', name: 'allure-results-e2e-edge' 
+                        }
                     }
                 }
             }
@@ -223,28 +244,16 @@ pipeline {
             }
             post {
                 always {
-                    publishHTML(target: [
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'htmlcov',
-                        reportFiles: 'index.html',
-                        reportName: 'Python Coverage Report'
-                    ])
-                }
-            }
-        }
-        
-        stage('Generate Allure Report') {
-            steps {
-                echo '📊 Generating Allure Report...'
-            }
-            post {
-                always {
-                    allure([
-                        includeProperties: false,
-                        results: [[path: 'allure-results']]
-                    ])
+                    dir ('employee') {
+                        publishHTML(target: [
+                            allowMissing: true,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'htmlcov',
+                            reportFiles: 'index.html',
+                            reportName: 'Python Coverage Report'
+                        ])
+                    }
                 }
             }
         }
@@ -256,7 +265,9 @@ pipeline {
             steps {
                 echo '🐍 Building Python Employee Application...'
                 sh '''
-                    docker-compose down
+                    docker stop ${APP_NAME} || true
+                    docker rm ${APP_NAME} || true
+                    docker rmi ${APP_NAME} || true
                     docker-compose up -d --build employee-app
                 '''
             }
@@ -265,18 +276,45 @@ pipeline {
     
     post {
         always {
-            echo '🧹 Cleaning up...'
-            sh '''
-                docker stop ${APP_NAME}-test || true
-                docker rm ${APP_NAME}-test || true
-                docker rmi ${APP_NAME}:${BUILD_VERSION} || true
-            '''
-            
-            archiveArtifacts artifacts: '''
-                test-results/**/*.xml,
-                allure-results/**/*,
-                htmlcov/**/*
-            ''', allowEmptyArchive: true
+            dir ('employee') {
+                sh 'ls -l'
+                unstash 'allure-results-unit'
+                unstash 'allure-results-integration'
+                unstash 'allure-results-e2e-chrome'
+                unstash 'allure-results-e2e-firefox'
+                unstash 'allure-results-e2e-edge'
+
+
+                unstash 'test-results-unit'
+                unstash 'test-results-integration'
+                sh 'ls -l'
+
+                echo '📊 Generating Allure Report...'
+                allure([
+                            includeProperties: false,
+                            results: [
+                                [path: 'allure-results/unit'],
+                                [path: 'allure-results/integration'],
+                                [path: 'allure-results/e2e-chrome'],
+                                [path: 'allure-results/e2e-firefox'],
+                                [path: 'allure-results/e2e-edge']]
+                        ])
+
+                echo '🧹 Cleaning up...'
+                sh '''
+                    docker stop ${APP_NAME}-test || true
+                    docker rm ${APP_NAME}-test || true
+                    docker rmi ${APP_NAME}:${BUILD_VERSION} || true
+                '''
+                
+                echo '📦 Archiving test results and reports...'
+
+                archiveArtifacts artifacts: '''
+                    test-results/**/*.xml,
+                    allure-results/**/*,
+                    htmlcov/**/*
+                ''', allowEmptyArchive: true
+            }
         }
         
         success {

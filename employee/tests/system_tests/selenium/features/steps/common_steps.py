@@ -26,6 +26,8 @@ def step_have_pending_expense(context, description, amount):
         EC.visibility_of_element_located(("css selector", "tbody tr:nth-child(2)"))
     )
     
+    # explicit wait needed here to ensure cells are loaded
+    context.wait.until(EC.visibility_of_all_elements_located(("tag name", "td")))
     data_cells = row.find_elements("tag name", "td")
     
     assert data_cells[0].text == "2025-12-29", "Date of the expense does not match"  # date of the expense
@@ -40,6 +42,8 @@ def step_see_expense_unchanged(context, description, status):
         EC.visibility_of_element_located(("css selector", "tbody tr:nth-child(2)"))
     )
     
+    # explicit wait needed here to ensure cells are loaded
+    context.wait.until(EC.visibility_of_all_elements_located(("tag name", "td")))
     data_cells = row.find_elements("tag name", "td")
     
     assert data_cells[0].text == "2025-12-29"  # date of the expense

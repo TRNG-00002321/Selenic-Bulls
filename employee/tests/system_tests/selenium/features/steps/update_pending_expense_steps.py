@@ -14,13 +14,17 @@ def step_click_edit_button(context, description, status):
         EC.visibility_of_element_located(("css selector", "tbody tr:nth-child(2)"))
     )
     
+    
+    # explicit wait needed here to ensure cells are loaded
+    context.wait.until(EC.visibility_of_all_elements_located(("tag name", "td")))
     data_cells = row.find_elements("tag name", "td")
+    
     
     assert data_cells[2].text == description, "Description of the expense does not match"
     assert data_cells[3].text.lower() == status.lower(), "Status of the expense does not match"
     
     edit_button = context.wait.until(
-        EC.element_to_be_clickable(("xpath", "//button[normalize-space()='Edit']"))
+        EC.visibility_of_element_located(("xpath", "//button[normalize-space()='Edit']"))
     )
     edit_button.click()
 
