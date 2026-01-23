@@ -261,8 +261,10 @@ pipeline {
     
     post {
         always {
+            sh 'ls -la'
             unstash 'allure-results-unit'
             unstash 'allure-results-integration'
+            sh 'ls -la'
             dir ('employee') {
                 echo '📊 Generating Allure Report...'
                 allure([
