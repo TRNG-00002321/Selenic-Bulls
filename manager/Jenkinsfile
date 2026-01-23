@@ -1,9 +1,6 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
 // QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
-// + Deploy to QA (Docker)  ✅ (now actually deploys)
-//
-// NOTE (temporary): Deploy runs on SUCCESS or UNSTABLE so you can deploy even while E2E is failing.
-// When E2E is fixed and you want deploy-only-on-success, change the Deploy "when" condition as noted below.
+// + Deploy to QA (Docker)  ✅ (deploy stage fixed to not get skipped due to branch name issues)
 
 pipeline {
   agent any
@@ -137,7 +134,6 @@ pipeline {
           '''
         }
 
-        // ✅ Copy unit allure results into a dedicated folder
         sh '''
           set -e
           rm -rf "${ALLURE_UNIT}" || true
@@ -244,7 +240,6 @@ pipeline {
           docker exec ${APP_NAME}-test sh -lc "command -v mvn && mvn -v && java -version"
           docker exec ${APP_NAME}-test sh -lc "test -f /data/expense_manager.db && echo '✅ DB present in /data' || (echo '❌ DB missing in /data' && exit 1)"
 
-          # ✅ Clean allure results INSIDE the container for this stage (api)
           docker exec ${APP_NAME}-test sh -lc "
             rm -rf ${CONTAINER_WS}/manager/target/allure-results/api || true
             mkdir -p ${CONTAINER_WS}/manager/target/allure-results/api
@@ -258,7 +253,6 @@ pipeline {
             export DATABASE_PATH=/data/expense_manager.db
             export DB_PATH=/data/expense_manager.db
 
-            # ✅ Force Allure results dir for API stage (ABSOLUTE)
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
 
             mvn -B clean test \
@@ -269,7 +263,6 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy API allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_API}" || true
           mkdir -p "${ALLURE_API}"
           docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/api/. "${ALLURE_API}" || true
@@ -328,10 +321,8 @@ pipeline {
         sh '''
           set -e
 
-          # ✅ Confirm selenium reachable from app container
           docker exec ${APP_NAME}-test sh -lc "wget -qO- http://${SELENIUM_CONTAINER}:4444/wd/hub/status | head -c 200"
 
-          # ✅ Clean allure results INSIDE the container for this stage (e2e)
           docker exec ${APP_NAME}-test sh -lc "
             rm -rf ${CONTAINER_WS}/manager/target/allure-results/e2e || true
             mkdir -p ${CONTAINER_WS}/manager/target/allure-results/e2e
@@ -342,10 +333,8 @@ pipeline {
             cd '"${CONTAINER_WS}"'/manager
             rm -rf target || true
 
-            # IMPORTANT: browser runs in selenium container, so baseUrl must be the APP CONTAINER NAME
             export BASE_URL="http://'${APP_NAME}'-test:'"${APP_PORT}"'"
 
-            # ✅ Force Allure results dir for E2E stage (ABSOLUTE)
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
 
             mvn -B clean test \
@@ -357,7 +346,6 @@ pipeline {
               -Dmaven.test.failure.ignore=true
           '
 
-          # ✅ Copy E2E allure results OUT of container into Jenkins workspace
           rm -rf "${ALLURE_E2E}" || true
           mkdir -p "${ALLURE_E2E}"
           docker cp ${APP_NAME}-test:${CONTAINER_WS}/manager/target/allure-results/e2e/. "${ALLURE_E2E}" || true
@@ -394,9 +382,6 @@ pipeline {
       }
     }
 
-    // -----------------------------
-    // Allure Reports (Per Type + Combined)
-    // -----------------------------
     stage('Generate Allure HTML Reports (Unit/API/E2E/Combined)') {
       when { expression { !params.SKIP_ALLURE } }
       steps {
@@ -404,13 +389,11 @@ pipeline {
         sh '''
           set -e
 
-          # Sanity check results exist
           echo "---- Results sanity check ----"
           echo -n "UNIT json: "; find "${ALLURE_UNIT}" -type f -name "*.json" 2>/dev/null | wc -l || true
           echo -n "API  json: "; find "${ALLURE_API}"  -type f -name "*.json" 2>/dev/null | wc -l || true
           echo -n "E2E  json: "; find "${ALLURE_E2E}"  -type f -name "*.json" 2>/dev/null | wc -l || true
 
-          # Download Allure CLI locally if missing
           if [ ! -x "${ALLURE_HOME}/bin/allure" ]; then
             echo "Downloading Allure CLI ${ALLURE_VERSION}..."
             mkdir -p .allure
@@ -423,7 +406,6 @@ pipeline {
           rm -rf "${ALLURE_HTML_ROOT}" || true
           mkdir -p "${ALLURE_HTML_UNIT}" "${ALLURE_HTML_API}" "${ALLURE_HTML_E2E}" "${ALLURE_HTML_ALL}"
 
-          # Generate per-type HTML reports (only if that folder has json)
           if find "${ALLURE_UNIT}" -type f -name "*.json" | grep -q .; then
             "${ALLURE_HOME}/bin/allure" generate "${ALLURE_UNIT}" -o "${ALLURE_HTML_UNIT}" --clean
           else
@@ -442,7 +424,6 @@ pipeline {
             echo "No E2E allure json found; skipping E2E HTML."
           fi
 
-          # Combined report (include all results folders that exist)
           COMBINED_INPUTS=""
           [ -d "${ALLURE_UNIT}" ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_UNIT}"
           [ -d "${ALLURE_API}"  ] && COMBINED_INPUTS="${COMBINED_INPUTS} ${ALLURE_API}"
@@ -460,10 +441,7 @@ pipeline {
       }
       post {
         always {
-          // Archive HTML reports so you have separate Unit/API/E2E HTML outputs per build
           archiveArtifacts artifacts: 'allure-html/**', allowEmptyArchive: true
-
-          // Also publish ONE Allure report in Jenkins UI (combined)
           allure([
             includeProperties: false,
             results: [
@@ -476,17 +454,29 @@ pipeline {
       }
     }
 
-    // -----------------------------
-    // Deploy to QA (Docker) ✅ NOW IMPLEMENTED
-    // -----------------------------
+    // ✅ NEW: shows why Deploy would skip (prints BRANCH_NAME, etc.)
+    stage('Debug Deploy Gate') {
+      steps {
+        script {
+          echo "BRANCH_NAME=${env.BRANCH_NAME}"
+          echo "GIT_BRANCH=${env.GIT_BRANCH}"
+          echo "CHANGE_ID=${env.CHANGE_ID}"
+          echo "SKIP_DEPLOY param=${params.SKIP_DEPLOY}"
+          echo "currentBuild.currentResult=${currentBuild.currentResult}"
+        }
+        sh 'git rev-parse --abbrev-ref HEAD || true'
+      }
+    }
+
+    // ✅ FIXED: Deploy no longer depends on `branch 'main'` directive (which can fail in non-multibranch jobs)
     stage('Deploy to QA (Docker)') {
       when {
         allOf {
           expression { !params.SKIP_DEPLOY }
-          branch 'main'
-          // TEMP: allow deploy even if UNSTABLE while E2E is failing
-          // Change to == 'SUCCESS' when you want strict deploy-only-on-success.
-          expression { currentBuild.currentResult == null || currentBuild.currentResult in ['SUCCESS','UNSTABLE'] }
+          // ✅ Works for multibranch pipelines; also supports repos still using "master"
+          expression { (env.BRANCH_NAME ?: '') in ['main', 'master'] }
+          // ✅ Deploy only if SUCCESS (or not yet set)
+          expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
         }
       }
       steps {
@@ -494,21 +484,12 @@ pipeline {
         sh '''
           set -e
 
-          echo "---- Deploy Gate Debug ----"
-          echo "BRANCH_NAME=${BRANCH_NAME}"
-          echo "SKIP_DEPLOY=${SKIP_DEPLOY}"
-
-          # Create QA volume (persist data across deployments)
           docker volume create "${QA_DB_VOLUME}" >/dev/null
-
-          # Ensure network exists (optional)
           docker network create "${TEST_NETWORK}" >/dev/null 2>&1 || true
 
-          # Stop/remove existing QA container
           docker stop "${QA_CONTAINER}" >/dev/null 2>&1 || true
           docker rm   "${QA_CONTAINER}" >/dev/null 2>&1 || true
 
-          echo "Starting QA container: ${QA_CONTAINER}"
           docker run -d \
             --name "${QA_CONTAINER}" \
             --restart unless-stopped \
@@ -530,7 +511,6 @@ pipeline {
           done
 
           echo "❌ QA did not become healthy in time"
-          echo "---- QA logs ----"
           docker logs "${QA_CONTAINER}" || true
           exit 1
         '''
