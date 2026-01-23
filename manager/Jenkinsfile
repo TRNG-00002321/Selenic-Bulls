@@ -1,8 +1,7 @@
 // Manager App (Java/Javalin) - Jenkins CI/CD Pipeline
 // QA Environment with Comprehensive Testing + Allure Reports (Unit + API + E2E + Combined)
-// + Deploy to QA (Docker)
-// STRICT CI: test failures FAIL the pipeline; deploy runs only on SUCCESS/UNSTABLE.
-// FIX #1: Branch resolution falls back to `git rev-parse --abbrev-ref HEAD` when BRANCH_NAME/GIT_BRANCH are null.
+// + Deploy to QA Environment (docker run for manager)
+// STRICT CI: test failures FAIL the pipeline.
 
 pipeline {
   agent any
@@ -43,10 +42,13 @@ pipeline {
     ALLURE_VERSION = "2.27.0"
     ALLURE_HOME    = ".allure/allure-${ALLURE_VERSION}"
 
-    // ✅ QA deploy container
+    // ✅ QA deploy runtime settings (manager)
     QA_CONTAINER   = "${APP_NAME}-qa"
-    QA_PORT        = "5001"              // change if you want QA on different port
-    QA_DB_VOLUME   = "expense-data-qa"   // separate from test DB
+    QA_PORT        = "5001"             // change if you want QA on different port
+    QA_DB_VOLUME   = "expense-data-qa"  // separate from test DB
+
+    // (Optional) if you want QA to also use the same docker network
+    // QA_NETWORK = "${TEST_NETWORK}"
   }
 
   options {
@@ -81,10 +83,6 @@ pipeline {
           echo "---- Workspace ----"
           pwd
           ls -la
-
-          echo "---- Git debug ----"
-          git rev-parse --abbrev-ref HEAD || true
-          git branch -av || true
 
           echo "---- manager/seed ----"
           ls -la manager/seed || true
@@ -261,7 +259,6 @@ pipeline {
 
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/api"
 
-            # STRICT CI: DO NOT IGNORE TEST FAILURES
             mvn -B clean test \
               -Dtest="**/integrationtests/**" \
               -Dapp.url=http://localhost:'"${APP_PORT}"' \
@@ -343,7 +340,6 @@ pipeline {
 
             export ALLURE_RESULTS_DIRECTORY="'"${CONTAINER_WS}"'/manager/target/allure-results/e2e"
 
-            # STRICT CI: DO NOT IGNORE TEST FAILURES
             mvn -B clean test \
               -Dtest="com.revature.systemtests.selenium.runners.TestRunner" \
               -DbaseUrl="${BASE_URL}" \
@@ -394,7 +390,6 @@ pipeline {
         echo '📊 Generating Allure HTML reports (per type + combined)...'
         sh '''
           set -e
-
           echo "---- Results sanity check ----"
           echo -n "UNIT json: "; find "${ALLURE_UNIT}" -type f -name "*.json" 2>/dev/null | wc -l || true
           echo -n "API  json: "; find "${ALLURE_API}"  -type f -name "*.json" 2>/dev/null | wc -l || true
@@ -460,66 +455,22 @@ pipeline {
       }
     }
 
-    // Optional: keep this stage for visibility, but now it also uses Fix #1 branch resolution
-    stage('Debug Deploy Gate') {
+    // ✅ NEW: Deploy stage for MANAGER (replaces old Deploy-to-QA stage)
+    // This deploys the already-built manager image (${APP_NAME}:${BUILD_VERSION}) to a QA container.
+    stage('Deploy to QA Environment') {
+      when { expression { !(params.SKIP_DEPLOY?.toBoolean()) } }
       steps {
-        script {
-          echo "BRANCH_NAME=${env.BRANCH_NAME}"
-          echo "GIT_BRANCH=${env.GIT_BRANCH}"
-          echo "CHANGE_ID=${env.CHANGE_ID}"
-          echo "SKIP_DEPLOY param=${params.SKIP_DEPLOY}"
-          echo "currentBuild.currentResult=${currentBuild.currentResult}"
-        }
-        sh '''
-          echo "git rev-parse --abbrev-ref HEAD:"
-          git rev-parse --abbrev-ref HEAD || true
-        '''
-      }
-    }
-
-    stage('Deploy to QA (Docker)') {
-      when {
-        allOf {
-          expression { !(params.SKIP_DEPLOY?.toBoolean()) }
-
-          // ✅ FIX #1 APPLIED HERE:
-          // If BRANCH_NAME/GIT_BRANCH are null, resolve branch via git.
-          expression {
-            def b = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: "").trim()
-            if (!b) {
-              b = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-            }
-
-            // Normalize common formats
-            b = b
-              .replaceFirst(/^origin\//, '')
-              .replaceFirst(/^refs\/heads\//, '')
-              .replaceFirst(/^refs\/remotes\/origin\//, '')
-              .replaceFirst(/^\*\//, '')
-              .trim()
-
-            echo "DEBUG Deploy when: resolved branch='${b}' (BRANCH_NAME='${env.BRANCH_NAME}', GIT_BRANCH='${env.GIT_BRANCH}')"
-            return ['main','master','nikhil-21'].contains(b)
-          }
-
-          expression {
-            def r = currentBuild.currentResult
-            echo "DEBUG Deploy when: currentBuild.currentResult='${r}', currentBuild.result='${currentBuild.result}'"
-            return r == null || r in ['SUCCESS','UNSTABLE']
-          }
-        }
-      }
-      steps {
-        echo "🚀 Deploying ${APP_NAME}:${BUILD_VERSION} to QA (container: ${QA_CONTAINER})..."
+        echo '☕ Deploying Java Manager Application to QA...'
         sh '''
           set -e
 
-          docker volume create "${QA_DB_VOLUME}" >/dev/null
           docker network create "${TEST_NETWORK}" >/dev/null 2>&1 || true
+          docker volume create "${QA_DB_VOLUME}" >/dev/null
 
           docker stop "${QA_CONTAINER}" >/dev/null 2>&1 || true
           docker rm   "${QA_CONTAINER}" >/dev/null 2>&1 || true
 
+          # NOTE: We do NOT remove the image here. It was built earlier as ${APP_NAME}:${BUILD_VERSION}.
           docker run -d \
             --name "${QA_CONTAINER}" \
             --restart unless-stopped \
