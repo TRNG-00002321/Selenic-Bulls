@@ -2,14 +2,26 @@ package com.revature.systemtests.selenium.hooks;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
+
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
+
+import org.openqa.selenium.remote.RemoteWebDriver;
+
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
+
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+import com.revature.systemtests.selenium.utils.TestContext;
+
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +33,8 @@ public class GenerateReportHooks {
 
     public static WebDriver driver;
 
-    public static final String BASE_URL = "http://localhost:5001";
+    // ✅ Allow CI override: -DbaseUrl=http://expense-manager-test:5001
+    public static final String BASE_URL = System.getProperty("baseUrl", "http://localhost:5001");
 
     public static String CURRENT_BROWSER;
 
@@ -29,11 +42,14 @@ public class GenerateReportHooks {
     public static final Path DOWNLOAD_DIR =
             Paths.get(System.getProperty("user.dir"), "Downloads");
 
+    // Track ownership so we don't quit a shared driver created elsewhere
+    private boolean createdLocalDriverHere = false;
+
     @Before
     public void setUp() {
 
         // -------------------------------------------------
-        // Ensure download directory exists
+        // Ensure download directory exists (local-only benefit)
         // -------------------------------------------------
         try {
             Files.createDirectories(DOWNLOAD_DIR);
@@ -50,58 +66,82 @@ public class GenerateReportHooks {
             browser = "chrome";
         }
         browser = browser.toLowerCase();
+        CURRENT_BROWSER = browser;
 
         boolean headless = "true".equalsIgnoreCase(System.getenv("HEADLESS"));
 
         // -------------------------------------------------
-        // Driver setup
+        // ✅ CI Mode: if remoteUrl is present, DO NOT create/quit per-scenario sessions.
+        // Reuse the shared driver from TestContext instead.
         // -------------------------------------------------
-        switch (browser) {
+        String remoteUrl = System.getProperty("selenium.remoteUrl", "").trim();
 
-            case "chrome": {
-                ChromeOptions options = new ChromeOptions();
-                configureChromeEdgeDownloads(options);
+        try {
+            if (!remoteUrl.isEmpty()) {
+                // ✅ Reuse single shared driver (RemoteWebDriver) from TestContext
+                driver = TestContext.getInstance().getDriver();
+                System.out.println("[INFO] Using shared RemoteWebDriver from TestContext | Remote=" + remoteUrl);
 
-                options.addArguments("--window-size=1920,1080");
+            } else {
+                // -------------------------------------------------
+                // Local Mode: create local drivers (optional)
+                // -------------------------------------------------
+                switch (browser) {
+                    case "chrome": {
+                        WebDriverManager.chromedriver().setup();
+                        ChromeOptions options = new ChromeOptions();
+                        configureChromeEdgeDownloads(options);
 
-                if (headless) {
-                    options.addArguments("--headless=new");
+                        options.addArguments("--window-size=1920,1080");
+
+                        if (headless) {
+                            options.addArguments("--headless=new");
+                        }
+
+                        driver = new ChromeDriver(options);
+                        break;
+                    }
+
+                    case "edge": {
+                        WebDriverManager.edgedriver().setup();
+                        EdgeOptions options = new EdgeOptions();
+                        configureChromeEdgeDownloads(options);
+
+                        options.addArguments("--window-size=1920,1080");
+
+                        if (headless) {
+                            options.addArguments("--headless=new");
+                        }
+
+                        driver = new EdgeDriver(options);
+                        break;
+                    }
+
+                    case "firefox": {
+                        WebDriverManager.firefoxdriver().setup();
+                        FirefoxOptions options = new FirefoxOptions();
+                        configureFirefoxDownloads(options);
+
+                        if (headless) {
+                            options.addArguments("-headless");
+                        }
+
+                        driver = new FirefoxDriver(options);
+                        break;
+                    }
+
+                    default:
+                        throw new IllegalArgumentException("Unsupported browser: " + browser);
                 }
 
-                driver = new ChromeDriver(options);
-                break;
+                createdLocalDriverHere = true;
+                System.out.println("[INFO] Started LOCAL driver | Browser=" + browser + " | Headless=" + headless);
             }
 
-            case "edge": {
-                EdgeOptions options = new EdgeOptions();
-                configureChromeEdgeDownloads(options);
-
-                options.addArguments("--window-size=1920,1080");
-
-                if (headless) {
-                    options.addArguments("--headless=new");
-                }
-
-                driver = new EdgeDriver(options);
-                break;
-            }
-
-            case "firefox": {
-                FirefoxOptions options = new FirefoxOptions();
-                configureFirefoxDownloads(options);
-
-                options.addArguments("--window-size=1920,1080");
-
-                if (headless) {
-                    options.addArguments("-headless");
-                }
-
-                driver = new FirefoxDriver(options);
-                break;
-            }
-
-            default:
-                throw new IllegalArgumentException("Unsupported browser: " + browser);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to start WebDriver (remoteUrl=" + remoteUrl + ", browser=" + browser + ")", e
+            );
         }
 
         // -------------------------------------------------
@@ -109,23 +149,35 @@ public class GenerateReportHooks {
         // -------------------------------------------------
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
-        driver.manage().window().maximize();
-
-        System.out.println("[INFO] Browser started: " + browser + " | Headless=" + headless);
-
-        CURRENT_BROWSER = browser;
+        try {
+            driver.manage().window().maximize();
+        } catch (Exception ignored) {
+            // Some remote setups may ignore maximize
+        }
     }
 
     @After
     public void tearDown() {
-        if (driver != null) {
-            driver.quit();
+        // ✅ CI: do NOT quit shared driver here (prevents "session not found")
+        // Local: quit only if we created the local driver in this hook
+        if (createdLocalDriverHere && driver != null) {
+            try {
+                driver.quit();
+            } catch (Exception ignored) {}
             driver = null;
+            createdLocalDriverHere = false;
+        } else {
+            // Optional: per-scenario cleanup without killing session
+            if (driver != null) {
+                try {
+                    driver.manage().deleteAllCookies();
+                } catch (Exception ignored) {}
+            }
         }
     }
 
     // =================================================
-    // Download Configuration Helpers
+    // Download Configuration Helpers (LOCAL only)
     // =================================================
 
     private void configureChromeEdgeDownloads(Object options) {
