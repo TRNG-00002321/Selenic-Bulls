@@ -108,32 +108,32 @@ def step_leave_field_empty(context, field):
     
     if field == "amount":
         # Just clear the amount field
-        input_field = context.driver.find_element(By.ID, field_id)
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
     
     elif field == "description":
         # Fill amount with valid value first
-        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field = context.wait.until(EC.visibility_of_element_located((By.ID, "amount")))
         amount_field.clear()
         amount_field.send_keys("50.00")
         
         # Leave description empty
-        input_field = context.driver.find_element(By.ID, field_id)
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
     
     elif field == "date":
         # Fill amount with valid value first
-        amount_field = context.driver.find_element(By.ID, "amount")
+        amount_field = context.wait.until(EC.visibility_of_element_located((By.ID, "amount")))
         amount_field.clear()
         amount_field.send_keys("50.00")
         
         # Fill description with valid value
-        desc_field = context.driver.find_element(By.ID, "description")
+        desc_field = context.wait.until(EC.visibility_of_element_located((By.ID, "description")))
         desc_field.clear()
         desc_field.send_keys("Valid Description")
         
         # Leave date empty
-        input_field = context.driver.find_element(By.ID, field_id)
+        input_field = context.wait.until(EC.visibility_of_element_located((By.ID, field_id)))
         input_field.clear()
 
 @then('a {field} validation error message containing "{error_text}" should be displayed for submit form')
@@ -153,7 +153,7 @@ def step_see_submit_validation_error(context, field, error_text):
     if field == "description" and error_text == "Description is required":
         # Special case: check for custom validation message in the UI
         try:
-            message_element = context.driver.find_element(By.ID, "submit-message")
+            message_element = context.wait.until(EC.visibility_of_element_located((By.ID, "submit-message")))
             assert error_text in message_element.text
         except:
             # Fallback to HTML5 validation message
